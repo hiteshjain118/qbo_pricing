@@ -28,7 +28,7 @@ class QBOAuthManager:
         self.auth_url = request_auth_params.auth_url
         self.client_id = request_auth_params.client_id
         self.client_secret = request_auth_params.client_secret
-        self.redirect_uri = "http://localhost:5001/callback"  # Make sure this matches your Intuit app config
+        self.redirect_uri = request_auth_params.redirect_uri
         self.token_url = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
         self.tokens_file = request_auth_params.tokens_file
         self.tokens = self.load_tokens()

@@ -11,6 +11,7 @@ class QBORequestAuthParams:
         self.client_secret = os.getenv("QBO_CLIENT_SECRET")
         self.auth_url = os.getenv("QBO_AUTH_URL")
         self.tokens_file = os.getenv("QBO_TOKENS_FILE")
+        self.redirect_uri = os.getenv("QBO_REDIRECT_URI")
         # Use logger instead of direct logging
         logger = logging.getLogger(__name__)
-        logger.info(f"QBORequestAuthParams: {self.client_id}, {self.client_secret}, {self.auth_url}, {self.tokens_file}")
+        logger.info(f"QBORequestAuthParams: {self.client_id}, {self.client_secret}, {self.auth_url}, {self.tokens_file}, {self.redirect_uri}")
