@@ -174,51 +174,36 @@ class QuickBooksOnlineAPI:
                 if not isinstance(row, dict):
                     continue
                 
-                row_type = row.get('type', '')
+                # Handle Header sections (main sections like ASSETS, LIABILITIES AND EQUITY)
+                if 'Header' in row and 'ColData' in row['Header']:
+                    header_cols = row['Header']['ColData']
+                    if header_cols and header_cols[0].get('value'):
+                        title = header_cols[0]['value']
+                        result += f"\n{indent}=== {title} ===\n"
                 
-                if row_type == 'Section':
-                    # Section header
-                    header = row.get('Header', {})
-                    col_data = header.get('ColData', [])
-                    title = col_data[0].get('value', 'Unknown Section') if col_data else 'Unknown Section'
-                    result += f"\n{indent}=== {title} ===\n"
-                    
-                    # Process subsections
-                    if 'Rows' in row:
-                        result += process_rows(row['Rows'], indent_level + 1)
-                
-                elif row_type == 'Data':
-                    # Data row
-                    col_data = row.get('ColData', [])
+                # Handle Data rows (actual account entries)
+                if 'ColData' in row and 'type' in row and row['type'] == 'Data':
+                    col_data = row['ColData']
                     if col_data:
-                        # Get the first column (account name)
                         account_name = col_data[0].get('value', 'Unknown Account')
-                        # Get the last column (amount)
                         amount = col_data[-1].get('value', '0') if len(col_data) > 1 else '0'
-                        
                         result += f"{indent}{account_name}: {format_amount(amount)}\n"
                 
-                elif row_type == 'Total':
-                    # Total row
-                    col_data = row.get('ColData', [])
-                    if col_data:
-                        total_label = col_data[0].get('value', 'Total')
-                        total_amount = col_data[-1].get('value', '0') if len(col_data) > 1 else '0'
-                        
-                        result += f"{indent}--- {total_label}: {format_amount(total_amount)} ---\n"
-                
-                # Process summary
-                summary = row.get('Summary', {})
-                if summary:
-                    summary_cols = summary.get('ColData', [])
+                # Handle Summary rows (totals)
+                if 'Summary' in row and 'ColData' in row['Summary']:
+                    summary_cols = row['Summary']['ColData']
                     if summary_cols:
                         summary_label = summary_cols[0].get('value', 'Total')
                         summary_amount = summary_cols[-1].get('value', '0') if len(summary_cols) > 1 else '0'
                         result += f"{indent}--- {summary_label}: {format_amount(summary_amount)} ---\n"
                 
-                # Handle nested Row structures
-                if 'Row' in row:
-                    result += process_rows(row['Row'], indent_level)
+                # Process nested Rows
+                if 'Rows' in row:
+                    nested_rows = row['Rows']
+                    if 'Row' in nested_rows:
+                        result += process_rows(nested_rows['Row'], indent_level + 1)
+                    else:
+                        result += process_rows(nested_rows, indent_level + 1)
             
             return result
         
