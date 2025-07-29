@@ -19,7 +19,7 @@ from auth_manager import QBOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
 from balance_sheet_intent_server import BalancesheetIntentServer
 from logging_config import setup_logging
-from database import get_db_session, QBOJob, init_database
+from database import get_db_session, init_database, get_job_model
 
 # Setup logging
 setup_logging()
@@ -41,7 +41,7 @@ class QBOReportManager:
         """Load job configurations from database"""
         try:
             db = get_db_session()
-            jobs = db.query(QBOJob).all()
+            jobs = db.query(get_job_model()).all()
             jobs_dict = {}
             for job in jobs:
                 jobs_dict[job.realm_id] = {
@@ -69,7 +69,7 @@ class QBOReportManager:
             db = get_db_session()
             
             # Check if job already exists
-            existing_job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            existing_job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
             
             next_run = self.calculate_next_run_datetime(schedule_time)
             
@@ -80,7 +80,7 @@ class QBOReportManager:
                 existing_job.next_run = next_run
             else:
                 # Create new job
-                new_job = QBOJob(
+                new_job = get_job_model()(
                     realm_id=realm_id,
                     email=email,
                     schedule_time=schedule_time,
@@ -121,7 +121,7 @@ class QBOReportManager:
             now = datetime.now()
             
             # Get jobs where next_run is in the past
-            jobs = db.query(QBOJob).filter(QBOJob.next_run <= now).all()
+            jobs = db.query(get_job_model()).filter(get_job_model().next_run <= now).all()
             
             jobs_to_run = []
             for job in jobs:
@@ -141,7 +141,7 @@ class QBOReportManager:
         """Update job run information in database"""
         try:
             db = get_db_session()
-            job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
             
             if job:
                 job.last_run = datetime.now()
@@ -214,7 +214,7 @@ class QBOReportManager:
         """Get job configuration for a specific realm from database"""
         try:
             db = get_db_session()
-            job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
             db.close()
             
             if job:
@@ -235,7 +235,7 @@ class QBOReportManager:
         """Delete a job configuration from database"""
         try:
             db = get_db_session()
-            job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
             
             if job:
                 db.delete(job)

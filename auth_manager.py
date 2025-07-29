@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 import requests
 from logging_config import setup_logging
-from database import get_db_session, QBOCompany, init_database
+from database import get_db_session, init_database, get_company_model
 
 from qbo_request_auth_params import QBORequestAuthParams
 
@@ -39,7 +39,7 @@ class QBOAuthManager:
         """Load tokens from database"""
         try:
             db = get_db_session()
-            companies = db.query(QBOCompany).all()
+            companies = db.query(get_company_model()).all()
             tokens = {}
             for company in companies:
                 tokens[company.realm_id] = {
@@ -70,7 +70,7 @@ class QBOAuthManager:
             db = get_db_session()
             
             # Check if company already exists
-            existing_company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            existing_company = db.query(get_company_model()).filter(get_company_model().realm_id == realm_id).first()
             
             expires_at = datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))
             
@@ -84,7 +84,7 @@ class QBOAuthManager:
                 existing_company.expires_at = expires_at
             else:
                 # Create new company
-                new_company = QBOCompany(
+                new_company = get_company_model()(
                     realm_id=realm_id,
                     access_token=token_data.get('access_token'),
                     refresh_token=token_data.get('refresh_token'),
@@ -109,7 +109,7 @@ class QBOAuthManager:
         """Get a valid access token, refreshing if necessary"""
         try:
             db = get_db_session()
-            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            company = db.query(get_company_model()).filter(get_company_model().realm_id == realm_id).first()
             db.close()
             
             if not company:
@@ -142,7 +142,7 @@ class QBOAuthManager:
         """Refresh an expired access token"""
         try:
             db = get_db_session()
-            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            company = db.query(get_company_model()).filter(get_company_model().realm_id == realm_id).first()
             
             if not company:
                 db.close()
@@ -251,7 +251,7 @@ class QBOAuthManager:
         """Get list of connected companies from database"""
         try:
             db = get_db_session()
-            companies = db.query(QBOCompany).all()
+            companies = db.query(get_company_model()).all()
             company_list = []
             
             for company in companies:
@@ -278,7 +278,7 @@ class QBOAuthManager:
         """Disconnect a company by removing its tokens from database"""
         try:
             db = get_db_session()
-            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            company = db.query(get_company_model()).filter(get_company_model().realm_id == realm_id).first()
             
             if company:
                 logger.info(f"Disconnecting company {realm_id}")
@@ -300,7 +300,7 @@ class QBOAuthManager:
         """Check if a company is connected and has valid tokens"""
         try:
             db = get_db_session()
-            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            company = db.query(get_company_model()).filter(get_company_model().realm_id == realm_id).first()
             db.close()
             
             if not company:

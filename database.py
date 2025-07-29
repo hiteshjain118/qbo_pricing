@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
-class QBOCompany(Base):
-    """Model for storing QuickBooks company tokens"""
-    __tablename__ = 'qbo_companies'
+class QBOCompanySandbox(Base):
+    """Model for storing QuickBooks company tokens (Sandbox)"""
+    __tablename__ = 'qbo_companies_sandbox'
     
     id = Column(Integer, primary_key=True)
     realm_id = Column(String(50), unique=True, nullable=False)
@@ -37,11 +37,28 @@ class QBOCompany(Base):
     expires_at = Column(DateTime, nullable=False)
     
     def __repr__(self):
-        return f"<QBOCompany(realm_id='{self.realm_id}')>"
+        return f"<QBOCompanySandbox(realm_id='{self.realm_id}')>"
 
-class QBOJob(Base):
-    """Model for storing scheduled jobs"""
-    __tablename__ = 'qbo_jobs'
+class QBOCompanyProduction(Base):
+    """Model for storing QuickBooks company tokens (Production)"""
+    __tablename__ = 'qbo_companies_production'
+    
+    id = Column(Integer, primary_key=True)
+    realm_id = Column(String(50), unique=True, nullable=False)
+    access_token = Column(Text, nullable=False)
+    refresh_token = Column(Text, nullable=False)
+    token_type = Column(String(20), nullable=False)
+    expires_in = Column(Integer, nullable=False)
+    refresh_token_expires_in = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    
+    def __repr__(self):
+        return f"<QBOCompanyProduction(realm_id='{self.realm_id}')>"
+
+class QBOJobSandbox(Base):
+    """Model for storing scheduled jobs (Sandbox)"""
+    __tablename__ = 'qbo_jobs_sandbox'
     
     id = Column(Integer, primary_key=True)
     realm_id = Column(String(50), nullable=False)
@@ -52,7 +69,22 @@ class QBOJob(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f"<QBOJob(realm_id='{self.realm_id}', email='{self.email}')>"
+        return f"<QBOJobSandbox(realm_id='{self.realm_id}', email='{self.email}')>"
+
+class QBOJobProduction(Base):
+    """Model for storing scheduled jobs (Production)"""
+    __tablename__ = 'qbo_jobs_production'
+    
+    id = Column(Integer, primary_key=True)
+    realm_id = Column(String(50), nullable=False)
+    email = Column(String(255), nullable=False)
+    schedule_time = Column(String(20), nullable=False)
+    next_run = Column(DateTime, nullable=True)
+    last_run = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<QBOJobProduction(realm_id='{self.realm_id}', email='{self.email}')>"
 
 def get_database_url():
     """Get database URL from environment variables"""
@@ -97,4 +129,22 @@ def init_database():
 def get_db_session():
     """Get database session"""
     _, SessionLocal = create_engine_and_session()
-    return SessionLocal() 
+    return SessionLocal()
+
+def is_prod_environment():
+    """Get current environment (sandbox or production)"""
+    return os.getenv('VERCEL') != None
+
+def get_company_model():
+    """Get the appropriate company model based on environment"""
+    if is_prod_environment():
+        return QBOCompanyProduction
+    else:
+        return QBOCompanySandbox
+
+def get_job_model():
+    """Get the appropriate job model based on environment"""
+    if is_prod_environment():
+        return QBOJobProduction
+    else:
+        return QBOJobSandbox 
