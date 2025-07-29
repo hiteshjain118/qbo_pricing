@@ -19,7 +19,7 @@ from auth_manager import QBOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
 from balance_sheet_intent_server import BalancesheetIntentServer
 from logging_config import setup_logging
-from database import get_db_session, init_database, get_job_model
+from database import DB
 
 # Setup logging
 setup_logging()
@@ -34,14 +34,13 @@ class QBOReportManager:
     def __init__(self, auth_params: QBORequestAuthParams):
         self.auth_manager = QBOAuthManager(auth_params)
         # Initialize database
-        init_database()
         logger.info("Database initialized for report manager")
     
     def load_jobs(self) -> Dict[str, Any]:
         """Load job configurations from database"""
         try:
-            db = get_db_session()
-            jobs = db.query(get_job_model()).all()
+            db = DB.get_session()
+            jobs = db.query(DB.get_job_model()).all()
             jobs_dict = {}
             for job in jobs:
                 jobs_dict[job.realm_id] = {
@@ -51,11 +50,12 @@ class QBOReportManager:
                     'next_run': job.next_run.isoformat() if job.next_run else None,
                     'last_run': job.last_run.isoformat() if job.last_run else None
                 }
-            db.close()
             return jobs_dict
         except Exception as e:
             logger.error(f"Error loading jobs from database: {e}")
             return {}
+        finally:
+            db.close()
     
     def save_jobs(self):
         """Save job configurations to database"""
@@ -66,10 +66,10 @@ class QBOReportManager:
     def store_job_config(self, realm_id: str, email: str, schedule_time: str):
         """Store job configuration for a company in database"""
         try:
-            db = get_db_session()
+            db = DB.get_session()
             
             # Check if job already exists
-            existing_job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
+            existing_job = db.query(DB.get_job_model()).filter(DB.get_job_model().realm_id == realm_id).first()
             
             next_run = self.calculate_next_run_datetime(schedule_time)
             
@@ -80,7 +80,7 @@ class QBOReportManager:
                 existing_job.next_run = next_run
             else:
                 # Create new job
-                new_job = get_job_model()(
+                new_job = DB.get_job_model()(
                     realm_id=realm_id,
                     email=email,
                     schedule_time=schedule_time,
@@ -89,14 +89,14 @@ class QBOReportManager:
                 db.add(new_job)
             
             db.commit()
-            db.close()
             logger.info(f"Stored job config for company {realm_id} in database")
             
         except Exception as e:
             logger.error(f"Error storing job config for company {realm_id}: {e}")
             if db:
                 db.rollback()
-                db.close()
+        finally:
+            db.close()
     
     def calculate_next_run(self, schedule_time: str) -> str:
         """Calculate next run time based on schedule"""
@@ -117,11 +117,11 @@ class QBOReportManager:
     def get_jobs_to_run(self) -> List[Dict[str, Any]]:
         """Get jobs that need to be executed from database"""
         try:
-            db = get_db_session()
+            db = DB.get_session()
             now = datetime.now()
             
             # Get jobs where next_run is in the past
-            jobs = db.query(get_job_model()).filter(get_job_model().next_run <= now).all()
+            jobs = db.query(DB.get_job_model()).filter(DB.get_job_model().next_run <= now).all()
             
             jobs_to_run = []
             for job in jobs:
@@ -131,17 +131,18 @@ class QBOReportManager:
                     'schedule_time': job.schedule_time
                 })
             
-            db.close()
             return jobs_to_run
         except Exception as e:
             logger.error(f"Error getting jobs to run: {e}")
             return []
+        finally:
+            db.close()
     
     def update_job_run(self, realm_id: str):
         """Update job run information in database"""
         try:
-            db = get_db_session()
-            job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
+            db = DB.get_session()
+            job = db.query(DB.get_job_model()).filter(DB.get_job_model().realm_id == realm_id).first()
             
             if job:
                 job.last_run = datetime.now()
@@ -149,12 +150,12 @@ class QBOReportManager:
                 db.commit()
                 logger.info(f"Updated job run for company {realm_id}")
             
-            db.close()
         except Exception as e:
             logger.error(f"Error updating job run for company {realm_id}: {e}")
             if db:
                 db.rollback()
-                db.close()
+        finally:
+            db.close()
         
     def run_scheduled_jobs(self):
         """Run all scheduled jobs"""
@@ -213,9 +214,8 @@ class QBOReportManager:
     def get_job_for_realm(self, realm_id: str) -> Optional[Dict[str, Any]]:
         """Get job configuration for a specific realm from database"""
         try:
-            db = get_db_session()
-            job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
-            db.close()
+            db = DB.get_session()
+            job = db.query(DB.get_job_model()).filter(DB.get_job_model().realm_id == realm_id).first()
             
             if job:
                 return {
@@ -230,25 +230,27 @@ class QBOReportManager:
         except Exception as e:
             logger.error(f"Error getting job for realm {realm_id}: {e}")
             return None
+        finally:
+            db.close()
     
     def delete_job(self, realm_id: str) -> bool:
         """Delete a job configuration from database"""
+        was_deleted = False
         try:
-            db = get_db_session()
-            job = db.query(get_job_model()).filter(get_job_model().realm_id == realm_id).first()
-            
+            db = DB.get_session()
+            job = db.query(DB.get_job_model()).filter(DB.get_job_model().realm_id == realm_id).first()
+
             if job:
                 db.delete(job)
                 db.commit()
-                db.close()
                 logger.info(f"Deleted job for company {realm_id}")
-                return True
+                was_deleted = True
             else:
-                db.close()
-                return False
+                was_deleted = False
         except Exception as e:
             logger.error(f"Error deleting job for company {realm_id}: {e}")
             if db:
                 db.rollback()
-                db.close()
-            return False 
+        finally:
+            db.close()
+            return was_deleted 

@@ -6,11 +6,12 @@ Simple script to list all rows in every database table
 import os
 from datetime import datetime
 from database import (
-    get_db_session, 
-    QBOCompanySandbox, 
-    QBOCompanyProduction, 
-    QBOJobSandbox, 
-    QBOJobProduction
+    get_db_session_with_options, 
+    QBOCompany, 
+    QBOJob,
+    is_prod_environment,
+    SANDBOX_TABLE_SUFFIX,
+    PROD_TABLE_SUFFIX
 )
 
 def format_datetime(dt):
@@ -19,14 +20,24 @@ def format_datetime(dt):
         return dt.strftime('%Y-%m-%d %H:%M:%S')
     return 'None'
 
-def list_table_data(model_class, table_name):
-    """List all data from a specific table"""
+def create_model_for_environment(base_model, table_suffix):
+    """Create a model instance with a specific table name"""
+    class EnvironmentModel(base_model):
+        __tablename__ = f"{base_model.__tablename__.replace('_sandbox', '').replace('_production', '')}{table_suffix}"
+    
+    return EnvironmentModel
+
+def list_table_data_for_environment(base_model, table_name, env_suffix):
+    """List all data from a specific table for a given environment"""
     try:
-        db = get_db_session()
-        records = db.query(model_class).all()
+        # Create a model instance for this specific environment
+        ModelClass = create_model_for_environment(base_model, env_suffix)
+        
+        db = get_db_session_with_options()
+        records = db.query(ModelClass).all()
         db.close()
         
-        print(f"\n📊 {table_name} ({len(records)} records):")
+        print(f"\n📊 {ModelClass.__tablename__} ({len(records)} records):")
         print("-" * 60)
         
         if not records:
@@ -68,7 +79,22 @@ def list_table_data(model_class, table_name):
                     print(f"    Status: ❌ Expired")
         
     except Exception as e:
-        print(f"❌ Error reading {table_name}: {e}")
+        print(f"❌ Error reading {table_name}{env_suffix}: {e}")
+
+def count_records_for_environment(base_model, table_name, env_suffix):
+    """Count records in a specific table for a given environment"""
+    try:
+        # Create a model instance for this specific environment
+        ModelClass = create_model_for_environment(base_model, env_suffix)
+        
+        db = get_db_session_with_options()
+        count = db.query(ModelClass).count()
+        db.close()
+        
+        return count
+    except Exception as e:
+        print(f"❌ Error counting {table_name}{env_suffix}: {e}")
+        return 0
 
 def main():
     """List all data from all tables"""
@@ -79,40 +105,32 @@ def main():
     # List sandbox tables
     print("\n🌱 SANDBOX ENVIRONMENT")
     print("=" * 30)
-    list_table_data(QBOCompanySandbox, "qbo_companies_sandbox")
-    list_table_data(QBOJobSandbox, "qbo_jobs_sandbox")
+    list_table_data_for_environment(QBOCompany, "qbo_companies", SANDBOX_TABLE_SUFFIX)
+    list_table_data_for_environment(QBOJob, "qbo_jobs", SANDBOX_TABLE_SUFFIX)
     
     # List production tables
     print("\n🚀 PRODUCTION ENVIRONMENT")
     print("=" * 30)
-    list_table_data(QBOCompanyProduction, "qbo_companies_production")
-    list_table_data(QBOJobProduction, "qbo_jobs_production")
+    list_table_data_for_environment(QBOCompany, "qbo_companies", PROD_TABLE_SUFFIX)
+    list_table_data_for_environment(QBOJob, "qbo_jobs", PROD_TABLE_SUFFIX)
     
     # Summary
     print("\n📈 SUMMARY")
     print("=" * 30)
     
-    try:
-        db = get_db_session()
-        
-        # Count sandbox records
-        sandbox_companies = db.query(QBOCompanySandbox).count()
-        sandbox_jobs = db.query(QBOJobSandbox).count()
-        
-        # Count production records
-        production_companies = db.query(QBOCompanyProduction).count()
-        production_jobs = db.query(QBOJobProduction).count()
-        
-        db.close()
-        
-        print(f"🌱 Sandbox Companies: {sandbox_companies}")
-        print(f"🌱 Sandbox Jobs: {sandbox_jobs}")
-        print(f"🚀 Production Companies: {production_companies}")
-        print(f"🚀 Production Jobs: {production_jobs}")
-        print(f"📊 Total Records: {sandbox_companies + sandbox_jobs + production_companies + production_jobs}")
-        
-    except Exception as e:
-        print(f"❌ Error generating summary: {e}")
+    # Count sandbox records
+    sandbox_companies = count_records_for_environment(QBOCompany, "qbo_companies", SANDBOX_TABLE_SUFFIX)
+    sandbox_jobs = count_records_for_environment(QBOJob, "qbo_jobs", SANDBOX_TABLE_SUFFIX)
+    
+    # Count production records
+    production_companies = count_records_for_environment(QBOCompany, "qbo_companies", PROD_TABLE_SUFFIX)
+    production_jobs = count_records_for_environment(QBOJob, "qbo_jobs", PROD_TABLE_SUFFIX)
+    
+    print(f"🌱 Sandbox Companies: {sandbox_companies}")
+    print(f"🌱 Sandbox Jobs: {sandbox_jobs}")
+    print(f"🚀 Production Companies: {production_companies}")
+    print(f"🚀 Production Jobs: {production_jobs}")
+    print(f"📊 Total Records: {sandbox_companies + sandbox_jobs + production_companies + production_jobs}")
 
 if __name__ == "__main__":
     main() 
