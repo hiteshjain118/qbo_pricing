@@ -31,8 +31,6 @@ class QBOAuthManager:
         self.client_secret = request_auth_params.client_secret
         self.redirect_uri = request_auth_params.redirect_uri
         self.token_url = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
-        # Initialize database
-        logger.info("Database initialized for auth manager")
 
     def load_tokens(self) -> Dict[str, Any]:
         """Load tokens from database"""

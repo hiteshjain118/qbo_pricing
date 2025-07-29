@@ -5,132 +5,142 @@ Simple script to list all rows in every database table
 
 import os
 from datetime import datetime
-from database import (
-    get_db_session_with_options, 
-    QBOCompany, 
-    QBOJob,
-    is_prod_environment,
-    SANDBOX_TABLE_SUFFIX,
-    PROD_TABLE_SUFFIX
-)
+from database import DB
+from sqlalchemy import text
+import pytz
 
 def format_datetime(dt):
-    """Format datetime for display"""
+    """Format datetime for display in PST timezone"""
     if dt:
-        return dt.strftime('%Y-%m-%d %H:%M:%S')
+        # Convert to PST timezone
+        pst = pytz.timezone('US/Pacific')
+        if dt.tzinfo is None:
+            # Assume UTC if no timezone info
+            dt = pytz.utc.localize(dt)
+        pst_time = dt.astimezone(pst)
+        return pst_time.strftime('%Y-%m-%d %H:%M:%S PST')
     return 'None'
 
-def create_model_for_environment(base_model, table_suffix):
-    """Create a model instance with a specific table name"""
-    class EnvironmentModel(base_model):
-        __tablename__ = f"{base_model.__tablename__.replace('_sandbox', '').replace('_production', '')}{table_suffix}"
-    
-    return EnvironmentModel
-
-def list_table_data_for_environment(base_model, table_name, env_suffix):
-    """List all data from a specific table for a given environment"""
-    try:
-        # Create a model instance for this specific environment
-        ModelClass = create_model_for_environment(base_model, env_suffix)
-        
-        db = get_db_session_with_options()
-        records = db.query(ModelClass).all()
-        db.close()
-        
-        print(f"\n📊 {ModelClass.__tablename__} ({len(records)} records):")
-        print("-" * 60)
-        
-        if not records:
-            print("  No records found")
-            return
-        
-        for i, record in enumerate(records, 1):
-            print(f"\n  Record {i}:")
-            if hasattr(record, 'realm_id'):
-                print(f"    Realm ID: {record.realm_id}")
-            if hasattr(record, 'email'):
-                print(f"    Email: {record.email}")
-            if hasattr(record, 'schedule_time'):
-                print(f"    Schedule Time: {record.schedule_time}")
-            if hasattr(record, 'access_token'):
-                print(f"    Access Token: {record.access_token[:20]}...")
-            if hasattr(record, 'refresh_token'):
-                print(f"    Refresh Token: {record.refresh_token[:20]}...")
-            if hasattr(record, 'token_type'):
-                print(f"    Token Type: {record.token_type}")
-            if hasattr(record, 'expires_in'):
-                print(f"    Expires In: {record.expires_in} seconds")
-            if hasattr(record, 'refresh_token_expires_in'):
-                print(f"    Refresh Token Expires In: {record.refresh_token_expires_in} seconds")
-            if hasattr(record, 'created_at'):
-                print(f"    Created At: {format_datetime(record.created_at)}")
-            if hasattr(record, 'expires_at'):
-                print(f"    Expires At: {format_datetime(record.expires_at)}")
-            if hasattr(record, 'next_run'):
-                print(f"    Next Run: {format_datetime(record.next_run)}")
-            if hasattr(record, 'last_run'):
-                print(f"    Last Run: {format_datetime(record.last_run)}")
-            
-            # Show token status
-            if hasattr(record, 'expires_at') and record.expires_at:
-                if datetime.now() < record.expires_at:
-                    print(f"    Status: ✅ Valid")
-                else:
-                    print(f"    Status: ❌ Expired")
-        
-    except Exception as e:
-        print(f"❌ Error reading {table_name}{env_suffix}: {e}")
-
-def count_records_for_environment(base_model, table_name, env_suffix):
-    """Count records in a specific table for a given environment"""
-    try:
-        # Create a model instance for this specific environment
-        ModelClass = create_model_for_environment(base_model, env_suffix)
-        
-        db = get_db_session_with_options()
-        count = db.query(ModelClass).count()
-        db.close()
-        
-        return count
-    except Exception as e:
-        print(f"❌ Error counting {table_name}{env_suffix}: {e}")
-        return 0
-
-def main():
-    """List all data from all tables"""
-    print("🗄️  Database Contents Report")
+def list_all_data():
+    """List all data from both sandbox and production tables"""
+    print("🗄️  Complete Database Contents Report")
     print("=" * 60)
     print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # List sandbox tables
-    print("\n🌱 SANDBOX ENVIRONMENT")
-    print("=" * 30)
-    list_table_data_for_environment(QBOCompany, "qbo_companies", SANDBOX_TABLE_SUFFIX)
-    list_table_data_for_environment(QBOJob, "qbo_jobs", SANDBOX_TABLE_SUFFIX)
-    
-    # List production tables
-    print("\n🚀 PRODUCTION ENVIRONMENT")
-    print("=" * 30)
-    list_table_data_for_environment(QBOCompany, "qbo_companies", PROD_TABLE_SUFFIX)
-    list_table_data_for_environment(QBOJob, "qbo_jobs", PROD_TABLE_SUFFIX)
-    
-    # Summary
-    print("\n📈 SUMMARY")
-    print("=" * 30)
-    
-    # Count sandbox records
-    sandbox_companies = count_records_for_environment(QBOCompany, "qbo_companies", SANDBOX_TABLE_SUFFIX)
-    sandbox_jobs = count_records_for_environment(QBOJob, "qbo_jobs", SANDBOX_TABLE_SUFFIX)
-    
-    # Count production records
-    production_companies = count_records_for_environment(QBOCompany, "qbo_companies", PROD_TABLE_SUFFIX)
-    production_jobs = count_records_for_environment(QBOJob, "qbo_jobs", PROD_TABLE_SUFFIX)
-    
-    print(f"🌱 Sandbox Companies: {sandbox_companies}")
-    print(f"🌱 Sandbox Jobs: {sandbox_jobs}")
-    print(f"🚀 Production Companies: {production_companies}")
-    print(f"🚀 Production Jobs: {production_jobs}")
-    print(f"📊 Total Records: {sandbox_companies + sandbox_jobs + production_companies + production_jobs}")
+    try:
+        db = DB.get_session()
+        
+        # Sandbox Companies
+        print("\n🌱 SANDBOX COMPANIES")
+        print("=" * 30)
+        sandbox_companies = db.execute(text("SELECT * FROM qbo_companies_sandbox")).fetchall()
+        print(f"\n📊 qbo_companies_sandbox ({len(sandbox_companies)} records):")
+        print("-" * 60)
+        
+        if not sandbox_companies:
+            print("  No sandbox companies found")
+        else:
+            for i, company in enumerate(sandbox_companies, 1):
+                print(f"\n  Record {i}:")
+                print(f"    ID: {company[0]}")
+                print(f"    Realm ID: {company[1]}")
+                print(f"    Access Token: {company[2][:20]}..." if company[2] else "    Access Token: None")
+                print(f"    Refresh Token: {company[3][:20]}..." if company[3] else "    Refresh Token: None")
+                print(f"    Token Type: {company[4]}")
+                print(f"    Expires In: {company[5]} seconds")
+                print(f"    Refresh Token Expires In: {company[6]} seconds")
+                print(f"    Created At: {format_datetime(company[7])}")
+                print(f"    Expires At: {format_datetime(company[8])}")
+                
+                # Show token status
+                if company[8]:
+                    if datetime.now() < company[8]:
+                        print(f"    Status: ✅ Valid")
+                    else:
+                        print(f"    Status: ❌ Expired")
+        
+        # Sandbox Jobs
+        print("\n🌱 SANDBOX JOBS")
+        print("=" * 30)
+        sandbox_jobs = db.execute(text("SELECT * FROM qbo_jobs_sandbox")).fetchall()
+        print(f"\n📊 qbo_jobs_sandbox ({len(sandbox_jobs)} records):")
+        print("-" * 60)
+        
+        if not sandbox_jobs:
+            print("  No sandbox jobs found")
+        else:
+            for i, job in enumerate(sandbox_jobs, 1):
+                print(f"\n  Record {i}:")
+                print(f"    ID: {job[0]}")
+                print(f"    Realm ID: {job[1]}")
+                print(f"    Email: {job[2]}")
+                print(f"    Schedule Time: {job[3]}")
+                print(f"    Next Run: {format_datetime(job[4])}")
+                print(f"    Last Run: {format_datetime(job[5])}")
+                print(f"    Created At: {format_datetime(job[6])}")
+        
+        # Production Companies
+        print("\n🚀 PRODUCTION COMPANIES")
+        print("=" * 30)
+        production_companies = db.execute(text("SELECT * FROM qbo_companies_production")).fetchall()
+        print(f"\n📊 qbo_companies_production ({len(production_companies)} records):")
+        print("-" * 60)
+        
+        if not production_companies:
+            print("  No production companies found")
+        else:
+            for i, company in enumerate(production_companies, 1):
+                print(f"\n  Record {i}:")
+                print(f"    ID: {company[0]}")
+                print(f"    Realm ID: {company[1]}")
+                print(f"    Access Token: {company[2][:20]}..." if company[2] else "    Access Token: None")
+                print(f"    Refresh Token: {company[3][:20]}..." if company[3] else "    Refresh Token: None")
+                print(f"    Token Type: {company[4]}")
+                print(f"    Expires In: {company[5]} seconds")
+                print(f"    Refresh Token Expires In: {company[6]} seconds")
+                print(f"    Created At: {format_datetime(company[7])}")
+                print(f"    Expires At: {format_datetime(company[8])}")
+                
+                # Show token status
+                if company[8]:
+                    if datetime.now() < company[8]:
+                        print(f"    Status: ✅ Valid")
+                    else:
+                        print(f"    Status: ❌ Expired")
+        
+        # Production Jobs
+        print("\n🚀 PRODUCTION JOBS")
+        print("=" * 30)
+        production_jobs = db.execute(text("SELECT * FROM qbo_jobs_production")).fetchall()
+        print(f"\n📊 qbo_jobs_production ({len(production_jobs)} records):")
+        print("-" * 60)
+        
+        if not production_jobs:
+            print("  No production jobs found")
+        else:
+            for i, job in enumerate(production_jobs, 1):
+                print(f"\n  Record {i}:")
+                print(f"    ID: {job[0]}")
+                print(f"    Realm ID: {job[1]}")
+                print(f"    Email: {job[2]}")
+                print(f"    Schedule Time: {job[3]}")
+                print(f"    Next Run: {format_datetime(job[4])}")
+                print(f"    Last Run: {format_datetime(job[5])}")
+                print(f"    Created At: {format_datetime(job[6])}")
+        
+        db.close()
+        
+        # Summary
+        print("\n📈 COMPLETE SUMMARY")
+        print("=" * 60)
+        print(f"🌱 Sandbox Companies: {len(sandbox_companies)}")
+        print(f"🌱 Sandbox Jobs: {len(sandbox_jobs)}")
+        print(f"🚀 Production Companies: {len(production_companies)}")
+        print(f"🚀 Production Jobs: {len(production_jobs)}")
+        print(f"📊 Total Records: {len(sandbox_companies) + len(sandbox_jobs) + len(production_companies) + len(production_jobs)}")
+        
+    except Exception as e:
+        print(f"❌ Error reading data: {e}")
 
 if __name__ == "__main__":
-    main() 
+    list_all_data() 

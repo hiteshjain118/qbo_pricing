@@ -33,8 +33,6 @@ class QBOReportManager:
     
     def __init__(self, auth_params: QBORequestAuthParams):
         self.auth_manager = QBOAuthManager(auth_params)
-        # Initialize database
-        logger.info("Database initialized for report manager")
     
     def load_jobs(self) -> Dict[str, Any]:
         """Load job configurations from database"""

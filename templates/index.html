@@ -336,7 +336,7 @@
                 <div class="status-text">
                     <strong>Report Schedule:</strong>
                     {% if existing_job %}
-                        {{ existing_job.email }} at {{ existing_job.schedule_time }}
+                        {{ existing_job.email }} at <span id="displayTime">{{ existing_job.schedule_time }}</span>
                         <button type="button" class="btn-link" onclick="editSchedule()">Edit</button>
                     {% else %}
                         Not scheduled
@@ -392,12 +392,13 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="schedule_time">Report Time</label>
+                    <label for="schedule_time">Report Time (Your Local Time)</label>
                     <input type="time" id="schedule_time" name="schedule_time" value="{{ existing_job.schedule_time if existing_job else '09:00' }}" 
                            {% if not connected_companies %}disabled{% endif %} required>
                     <small style="color: #666; margin-top: 5px; display: block;">
-                        Reports will be generated and sent daily at this time
+                        Reports will be generated and sent daily at this time in your local timezone
                     </small>
+                    <input type="hidden" id="user_timezone" name="user_timezone" value="">
                 </div>
                 
                 <button type="submit" class="btn" id="scheduleBtn" 
@@ -423,6 +424,22 @@
             const emailInput = document.getElementById('email');
             const timeInput = document.getElementById('schedule_time');
             const scheduleBtn = document.getElementById('scheduleBtn');
+            const timezoneInput = document.getElementById('user_timezone');
+            
+            // Detect user's timezone
+            function detectTimezone() {
+                try {
+                    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    timezoneInput.value = timezone;
+                    console.log('Detected timezone:', timezone);
+                } catch (e) {
+                    console.error('Error detecting timezone:', e);
+                    timezoneInput.value = 'UTC';
+                }
+            }
+            
+            // Detect timezone on page load
+            detectTimezone();
             
             // Check if QuickBooks is connected
             const isConnected = document.querySelector('.container').dataset.connected === 'true';
@@ -467,6 +484,41 @@
                     }
                 });
             });
+
+            // Convert UTC time to user's local timezone for display
+            function convertTimeToLocal(utcTime) {
+                try {
+                    const timezone = timezoneInput.value || Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    const [hours, minutes] = utcTime.split(':').map(Number);
+                    
+                    // Create a date object for today with the UTC time
+                    const today = new Date();
+                    const utcDate = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes));
+                    
+                    // Convert to user's timezone
+                    const localDate = new Date(utcDate.toLocaleString('en-US', { timeZone: timezone }));
+                    const localHours = localDate.getHours().toString().padStart(2, '0');
+                    const localMinutes = localDate.getMinutes().toString().padStart(2, '0');
+                    
+                    return `${localHours}:${localMinutes}`;
+                } catch (e) {
+                    console.error('Error converting time:', e);
+                    return utcTime; // Fallback to original time
+                }
+            }
+            
+            // Convert existing job time to local timezone if it exists
+            if (timeInput.value && timeInput.value !== '09:00') {
+                const localTime = convertTimeToLocal(timeInput.value);
+                timeInput.value = localTime;
+            }
+            
+            // Convert displayed time in status section
+            const displayTimeElement = document.getElementById('displayTime');
+            if (displayTimeElement && displayTimeElement.textContent) {
+                const localDisplayTime = convertTimeToLocal(displayTimeElement.textContent);
+                displayTimeElement.textContent = localDisplayTime;
+            }
         });
         
         function disconnectQuickBooks() {

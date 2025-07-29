@@ -69,6 +69,7 @@ def configure_job():
     realm_id = request.form.get('realm_id')
     email = request.form.get('email')
     schedule_time = request.form.get('schedule_time')
+    user_timezone = request.form.get('user_timezone', 'UTC')
     
     if not all([email, schedule_time]):
         flash('Please fill in all fields.', 'error')
@@ -87,8 +88,34 @@ def configure_job():
         flash('Company not connected. Please connect QuickBooks first.', 'error')
         return redirect(url_for('index'))
     
-    report_manager.store_job_config(realm_id, email, schedule_time)
-    flash('Job scheduled successfully!', 'success')
+    # Convert user's local time to UTC for storage
+    try:
+        import pytz
+        from datetime import datetime, time
+        
+        # Parse the time input (HH:MM format)
+        hour, minute = map(int, schedule_time.split(':'))
+        user_time = time(hour, minute)
+        
+        # Create a datetime object for today in user's timezone
+        user_tz = pytz.timezone(user_timezone)
+        today = datetime.now(user_tz).date()
+        user_datetime = user_tz.localize(datetime.combine(today, user_time))
+        
+        # Convert to UTC
+        utc_datetime = user_datetime.astimezone(pytz.UTC)
+        
+        # Store the UTC time as HH:MM format
+        utc_schedule_time = utc_datetime.strftime('%H:%M')
+        
+        logger.info(f"Converting schedule time from {user_timezone}: {schedule_time} -> UTC: {utc_schedule_time}")
+        
+        report_manager.store_job_config(realm_id, email, utc_schedule_time)
+        flash('Job scheduled successfully!', 'success')
+        
+    except Exception as e:
+        logger.error(f"Error converting timezone: {e}")
+        flash('Error processing time. Please try again.', 'error')
     
     return redirect(url_for('index'))
 
