@@ -144,22 +144,13 @@ class QuickBooksOnlineAPI:
     
     @staticmethod
     def format_balance_sheet(balance_sheet_data: Dict[str, Any]) -> str:
-        """
-        Format balance sheet data into a readable string
-        
-        Args:
-            balance_sheet_data: Raw balance sheet data from QBO API
-            
-        Returns:
-            Formatted string representation of the balance sheet
-        """
-        logger.info(f"Formatting balance sheet data: {len(balance_sheet_data)}")
-        if not balance_sheet_data:
-            logger.warning("No balance sheet data available")
-            return "No balance sheet data available"
+        """Format balance sheet data into a readable string"""
+        logger.info(f"Formatting balance sheet data: {len(str(balance_sheet_data))} characters")
         
         def format_amount(amount_str: str) -> str:
-            """Format amount string for display"""
+            """Format amount string to currency format"""
+            if not amount_str or amount_str == '0':
+                return '$0.00'
             try:
                 amount = float(amount_str)
                 return f"${amount:,.2f}"
@@ -188,47 +179,47 @@ class QuickBooksOnlineAPI:
                 if not isinstance(row, dict):
                     continue
                 
-                    row_type = row.get('type', '')
-                    
-                    if row_type == 'Section':
-                        # Section header
+                row_type = row.get('type', '')
+                
+                if row_type == 'Section':
+                    # Section header
                     header = row.get('Header', {})
                     col_data = header.get('ColData', [])
                     title = col_data[0].get('value', 'Unknown Section') if col_data else 'Unknown Section'
-                        result += f"\n{indent}=== {title} ===\n"
-                        
-                        # Process subsections
-                        if 'Rows' in row:
-                            result += process_rows(row['Rows'], indent_level + 1)
+                    result += f"\n{indent}=== {title} ===\n"
                     
-                    # Process summary
-                    summary = row.get('Summary', {})
-                    if summary:
-                        summary_cols = summary.get('ColData', [])
-                        if summary_cols:
-                            summary_label = summary_cols[0].get('value', 'Total')
-                            summary_amount = summary_cols[-1].get('value', '0') if len(summary_cols) > 1 else '0'
-                            result += f"{indent}--- {summary_label}: {format_amount(summary_amount)} ---\n"
-                    
-                    elif row_type == 'Data':
-                        # Data row
+                    # Process subsections
+                    if 'Rows' in row:
+                        result += process_rows(row['Rows'], indent_level + 1)
+                
+                # Process summary
+                summary = row.get('Summary', {})
+                if summary:
+                    summary_cols = summary.get('ColData', [])
+                    if summary_cols:
+                        summary_label = summary_cols[0].get('value', 'Total')
+                        summary_amount = summary_cols[-1].get('value', '0') if len(summary_cols) > 1 else '0'
+                        result += f"{indent}--- {summary_label}: {format_amount(summary_amount)} ---\n"
+                
+                elif row_type == 'Data':
+                    # Data row
                     col_data = row.get('ColData', [])
                     if col_data:
-                            # Get the first column (account name)
+                        # Get the first column (account name)
                         account_name = col_data[0].get('value', 'Unknown Account')
-                            # Get the last column (amount)
+                        # Get the last column (amount)
                         amount = col_data[-1].get('value', '0') if len(col_data) > 1 else '0'
-                            
-                            result += f"{indent}{account_name}: {format_amount(amount)}\n"
-                    
-                    elif row_type == 'Total':
-                        # Total row
+                        
+                        result += f"{indent}{account_name}: {format_amount(amount)}\n"
+                
+                elif row_type == 'Total':
+                    # Total row
                     col_data = row.get('ColData', [])
                     if col_data:
                         total_label = col_data[0].get('value', 'Total')
                         total_amount = col_data[-1].get('value', '0') if len(col_data) > 1 else '0'
-                            
-                            result += f"{indent}--- {total_label}: {format_amount(total_amount)} ---\n"
+                        
+                        result += f"{indent}--- {total_label}: {format_amount(total_amount)} ---\n"
                 
                 # Handle nested Row structures
                 if 'Row' in row:
@@ -258,6 +249,7 @@ Currency: {currency}
         if 'Row' in rows:
             formatted_report += process_rows(rows['Row'])
         else:
-        formatted_report += process_rows(rows)
+            formatted_report += process_rows(rows)
         
+        logger.info(f"Formatted report length: {len(formatted_report)} characters")
         return formatted_report 

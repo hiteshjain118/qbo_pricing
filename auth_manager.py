@@ -114,25 +114,25 @@ class QBOAuthManager:
             
             if not company:
                 logger.info(f"No company found for realm_id: {realm_id}")
-            return None
-        
+                return None
+            
             access_token = company.access_token
             expires_at = company.expires_at
-        
-        if not access_token:
-            return None
-        
-        # Check if token is expired
+            
+            if not access_token:
+                return None
+            
+            # Check if token is expired
             if expires_at and datetime.now() >= expires_at:
                 logger.info(f"Token for {realm_id} expired at: {expires_at}. Refreshing!")
-                    # Refresh the token
-                    refreshed_info = self.refresh_access_token(realm_id)
-                    if refreshed_info:
-                        return refreshed_info.get('access_token')
-                    else:
-                        return None
-        
-        return access_token
+                # Refresh the token
+                refreshed_info = self.refresh_access_token(realm_id)
+                if refreshed_info:
+                    return refreshed_info.get('access_token')
+                else:
+                    return None
+            
+            return access_token
             
         except Exception as e:
             logger.error(f"Error getting access token for {realm_id}: {e}")
@@ -140,60 +140,74 @@ class QBOAuthManager:
     
     def refresh_access_token(self, realm_id: str) -> Optional[Dict[str, Any]]:
         """Refresh an expired access token"""
-        if realm_id not in self.tokens:
-            return None
-        
-        company_info = self.tokens[realm_id]
-        refresh_token = company_info.get('refresh_token')
-        
-        if not refresh_token:
-            return None
-        
-        data = {
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token
-        }
-        
-        headers = {
-            'Authorization': f'Basic {base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()}',
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-        
         try:
-            response = requests.post(self.token_url, data=data, headers=headers)
-            response.raise_for_status()
+            db = get_db_session()
+            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
             
-            # Log intuit_tid if present in response headers
-            intuit_tid = response.headers.get('intuit_tid')
-            if intuit_tid:
-                logger.info(f"Token Refresh API Response - intuit_tid: {intuit_tid}")
-            else:
-                logger.info("Token Refresh API Response - no intuit_tid found in headers")
+            if not company:
+                db.close()
+                return None
             
-            token_data = response.json()
+            refresh_token = company.refresh_token
             
-            # Update stored tokens
-            company_info.update({
-                'access_token': token_data.get('access_token'),
-                'refresh_token': token_data.get('refresh_token', refresh_token),
-                'expires_in': token_data.get('expires_in'),
-                'expires_at': (datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))).isoformat(),
-                'last_refreshed': datetime.now().isoformat()
-            })
+            if not refresh_token:
+                db.close()
+                return None
             
-            self.save_tokens()
+            data = {
+                'grant_type': 'refresh_token',
+                'refresh_token': refresh_token
+            }
             
-            return company_info
+            headers = {
+                'Authorization': f'Basic {base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
             
-        except requests.exceptions.RequestException as e:
-            print(f"Error refreshing token: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                # Log intuit_tid even in error responses
-                intuit_tid = e.response.headers.get('intuit_tid')
+            try:
+                response = requests.post(self.token_url, data=data, headers=headers)
+                response.raise_for_status()
+                
+                # Log intuit_tid if present in response headers
+                intuit_tid = response.headers.get('intuit_tid')
                 if intuit_tid:
-                    logger.error(f"Token Refresh API Error Response - intuit_tid: {intuit_tid}")
+                    logger.info(f"Token Refresh API Response - intuit_tid: {intuit_tid}")
                 else:
-                    logger.error("Token Refresh API Error Response - no intuit_tid found in headers")
+                    logger.info("Token Refresh API Response - no intuit_tid found in headers")
+                
+                token_data = response.json()
+                
+                # Update stored tokens in database
+                company.access_token = token_data.get('access_token')
+                company.refresh_token = token_data.get('refresh_token', refresh_token)
+                company.expires_in = token_data.get('expires_in')
+                company.refresh_token_expires_in = token_data.get('x_refresh_token_expires_in')
+                company.expires_at = datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))
+                
+                db.commit()
+                db.close()
+                
+                return {
+                    'access_token': company.access_token,
+                    'refresh_token': company.refresh_token,
+                    'expires_in': company.expires_in,
+                    'expires_at': company.expires_at.isoformat()
+                }
+                
+            except requests.exceptions.RequestException as e:
+                print(f"Error refreshing token: {e}")
+                if hasattr(e, 'response') and e.response is not None:
+                    # Log intuit_tid even in error responses
+                    intuit_tid = e.response.headers.get('intuit_tid')
+                    if intuit_tid:
+                        logger.error(f"Token Refresh API Error Response - intuit_tid: {intuit_tid}")
+                    else:
+                        logger.error("Token Refresh API Error Response - no intuit_tid found in headers")
+                db.close()
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error refreshing token for {realm_id}: {e}")
             return None
     
     def exchange_code_for_tokens(self, authorization_code: str) -> Optional[Dict[str, Any]]:
@@ -243,17 +257,17 @@ class QBOAuthManager:
             for company in companies:
                 status = "Valid"
                 if company.expires_at and datetime.now() >= company.expires_at:
-                        status = "Expired"
-            
-            company_data = {
+                    status = "Expired"
+                
+                company_data = {
                     'realm_id': company.realm_id,
-                'status': status,
+                    'status': status,
                     'created_at': company.created_at.isoformat(),
                     'expires_at': company.expires_at.isoformat()
-            }
-            
+                }
+                
                 company_list.append(company_data)
-        
+            
             db.close()
             return company_list
         except Exception as e:
@@ -271,7 +285,7 @@ class QBOAuthManager:
                 db.delete(company)
                 db.commit()
                 db.close()
-            return True
+                return True
             else:
                 db.close()
                 return False
@@ -280,7 +294,7 @@ class QBOAuthManager:
             if db:
                 db.rollback()
                 db.close()
-        return False
+            return False
     
     def is_company_connected(self, realm_id: str) -> bool:
         """Check if a company is connected and has valid tokens"""
