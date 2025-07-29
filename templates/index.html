@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QBO Report Scheduler</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #e15a3a 0%, #c94a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+            font-weight: 400;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #fbdcd4;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #e15a3a;
+            box-shadow: 0 0 0 3px rgba(225, 90, 58, 0.1);
+        }
+        
+        .form-group input:disabled {
+            background-color: #fef7f6;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #e15a3a 0%, #c94a2e 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(225, 90, 58, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #e15a3a;
+            border: 2px solid #e15a3a;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #e15a3a;
+            color: white;
+        }
+        
+        .btn-secondary#runJobBtn {
+            background: #17a2b8;
+            color: white;
+            border: 2px solid #17a2b8;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary#runJobBtn:hover:not(:disabled) {
+            background: #138496;
+            border-color: #138496;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #e15a3a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .company-info {
+            background: #fef7f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #fbdcd4;
+        }
+        
+        .job-details {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #d4edda;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .status-summary {
+            background: #fef7f6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #fbdcd4;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .status-icon.connected {
+            background: #28a745;
+        }
+        
+        .status-icon.disconnected {
+            background: #dc3545;
+        }
+        
+        .status-icon.scheduled {
+            background: #17a2b8;
+        }
+        
+        .status-icon.unscheduled {
+            background: #6c757d;
+        }
+        
+        .status-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .btn-link {
+            background: none;
+            border: none;
+            color: #e15a3a;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+            font-weight: 500;
+        }
+        
+        .btn-link:hover {
+            color: #c94a2e;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #fbdcd4;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* Additional Coral Bricks styling */
+        .section p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .form-group small {
+            color: #666;
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        /* Enhanced button states */
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(225, 90, 58, 0.3);
+        }
+        
+        /* Status summary enhancements */
+        .status-summary {
+            background: linear-gradient(135deg, #fef7f6 0%, #fdeeea 100%);
+        }
+        
+        /* Company info enhancements */
+        .company-info {
+            background: linear-gradient(135deg, #fef7f6 0%, #fdeeea 100%);
+            border-left: 4px solid #e15a3a;
+        }
+        
+        /* Job details enhancements */
+        .job-details {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" data-connected="{{ 'true' if connected_companies else 'false' }}">
+        <div class="header">
+            <h1>📊 QBO Report Scheduler</h1>
+            <p>Schedule automated QuickBooks Balance Sheet reports with ease</p>
+        </div>
+        
+        <!-- Status Summary -->
+        <div class="status-summary">
+            <div class="status-item">
+                <span class="status-icon {% if connected_companies %}connected{% else %}disconnected{% endif %}"></span>
+                <div class="status-text">
+                    <strong>QuickBooks Connection:</strong>
+                    {% if connected_companies %}
+                        Connected to {{ connected_companies[0].company_name or 'QuickBooks Company' }}
+                        <button type="button" class="btn-link" onclick="disconnectQuickBooks()">Disconnect</button>
+                    {% else %}
+                        Not connected
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <span class="status-icon {% if existing_job %}scheduled{% else %}unscheduled{% endif %}"></span>
+                <div class="status-text">
+                    <strong>Report Schedule:</strong>
+                    {% if existing_job %}
+                        {{ existing_job.email }} at {{ existing_job.schedule_time }}
+                        <button type="button" class="btn-link" onclick="editSchedule()">Edit</button>
+                    {% else %}
+                        Not scheduled
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="status {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Section 1: QuickBooks Connection -->
+        <div class="section">
+            <h3>1. Connect QuickBooks</h3>
+            <p style="margin-bottom: 20px; color: #666;">
+                To schedule automated reports, you need to connect your QuickBooks Online account. 
+                This will allow us to access your financial data and send reports to your email.
+            </p>
+            
+            {% if connected_companies %}
+                <div class="company-info">
+                    <strong>Connected Company:</strong> {{ connected_companies[0].company_name or 'QuickBooks Company' }}
+                </div>
+            {% else %}
+                <form method="POST" action="{{ url_for('connect_quickbooks') }}">
+                    <button type="submit" class="btn">
+                        Connect QuickBooks
+                    </button>
+                </form>
+                
+                <p style="margin-top: 20px; font-size: 14px; color: #666;">
+                    You'll be redirected to QuickBooks to authorize this application.
+                </p>
+            {% endif %}
+        </div>
+        
+        <!-- Section 2: Report Configuration -->
+        <div class="section">
+            <h3>2. Configure Report Schedule</h3>
+            
+            <form method="POST" action="{{ url_for('configure_job') }}" id="scheduleForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="{{ existing_job.email if existing_job else '' }}" 
+                           {% if not connected_companies %}disabled{% endif %} required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="schedule_time">Report Time</label>
+                    <input type="time" id="schedule_time" name="schedule_time" value="{{ existing_job.schedule_time if existing_job else '09:00' }}" 
+                           {% if not connected_companies %}disabled{% endif %} required>
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        Reports will be generated and sent daily at this time
+                    </small>
+                </div>
+                
+                <button type="submit" class="btn" id="scheduleBtn" 
+                        {% if not connected_companies or (not existing_job and (not email or not schedule_time)) %}disabled{% endif %}>
+                    {% if existing_job %}
+                    Update Schedule
+                    {% else %}
+                    Schedule Report
+                    {% endif %}
+                </button>
+                
+                {% if existing_job %}
+                <button type="button" class="btn btn-secondary" id="runJobBtn" onclick="runJobNow()">
+                    🚀 Run Report Now
+                </button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.getElementById('email');
+            const timeInput = document.getElementById('schedule_time');
+            const scheduleBtn = document.getElementById('scheduleBtn');
+            
+            // Check if QuickBooks is connected
+            const isConnected = document.querySelector('.container').dataset.connected === 'true';
+            
+            // Enable/disable fields based on connection status
+            function updateFieldStates() {
+                if (isConnected) {
+                    emailInput.disabled = false;
+                    timeInput.disabled = false;
+                } else {
+                    emailInput.disabled = true;
+                    timeInput.disabled = true;
+                    scheduleBtn.disabled = true;
+                }
+            }
+            
+            // Enable/disable schedule button based on form completion
+            function updateScheduleButton() {
+                if (isConnected && emailInput.value && timeInput.value) {
+                    scheduleBtn.disabled = false;
+                } else {
+                    scheduleBtn.disabled = true;
+                }
+            }
+            
+            // Initialize states
+            updateFieldStates();
+            updateScheduleButton();
+            
+            // Add event listeners for real-time validation
+            emailInput.addEventListener('input', updateScheduleButton);
+            timeInput.addEventListener('input', updateScheduleButton);
+            
+            // Show loading state on form submission
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const button = this.querySelector('button[type="submit"]');
+                    if (button) {
+                        button.disabled = true;
+                        button.innerHTML = '<span class="loading"></span>Processing...';
+                    }
+                });
+            });
+        });
+        
+        function disconnectQuickBooks() {
+            if (confirm('Are you sure you want to disconnect QuickBooks? This will remove all scheduled reports.')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{{ url_for("disconnect_quickbooks") }}';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        function editSchedule() {
+            // Enable editing of schedule fields
+            document.getElementById('email').disabled = false;
+            document.getElementById('schedule_time').disabled = false;
+            document.getElementById('scheduleBtn').disabled = false;
+        }
+        
+        function runJobNow() {
+            // Show loading state
+            const runJobBtn = document.getElementById('runJobBtn');
+            const originalText = runJobBtn.innerHTML;
+            runJobBtn.innerHTML = '<span class="loading"></span>Running Report...';
+            runJobBtn.disabled = true;
+            
+            // Submit form to run job endpoint
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("run_job_now") }}';
+            
+            // Add current email and schedule time
+            const emailInput = document.getElementById('email');
+            const timeInput = document.getElementById('schedule_time');
+            
+            const emailField = document.createElement('input');
+            emailField.type = 'hidden';
+            emailField.name = 'email';
+            emailField.value = emailInput.value;
+            form.appendChild(emailField);
+            
+            const timeField = document.createElement('input');
+            timeField.type = 'hidden';
+            timeField.name = 'schedule_time';
+            timeField.value = timeInput.value;
+            form.appendChild(timeField);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+</body>
+</html> 

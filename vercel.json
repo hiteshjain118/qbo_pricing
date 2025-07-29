@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 9 * * *"
+    }
+  ],
+  "functions": {
+    "api/cron.py": {
+      "runtime": "python3.9"
+    }
+  }
+} 
