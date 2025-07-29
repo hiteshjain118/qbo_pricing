@@ -138,6 +138,10 @@ class QuickBooksOnlineAPI:
     @staticmethod
     def format_balance_sheet(balance_sheet_data: Dict[str, Any]) -> str:
         """Format balance sheet data into a readable string"""
+        # Handle empty or None data
+        if not balance_sheet_data or balance_sheet_data is None:
+            return "No balance sheet data available"
+            
         logger.info(f"Formatting balance sheet data: {len(str(balance_sheet_data))} characters")
         
         def format_amount(amount_str: str) -> str:
