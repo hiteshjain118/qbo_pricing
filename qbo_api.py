@@ -188,18 +188,18 @@ class QuickBooksOnlineAPI:
                 if not isinstance(row, dict):
                     continue
                 
-                row_type = row.get('type', '')
-                
-                if row_type == 'Section':
-                    # Section header
+                    row_type = row.get('type', '')
+                    
+                    if row_type == 'Section':
+                        # Section header
                     header = row.get('Header', {})
                     col_data = header.get('ColData', [])
                     title = col_data[0].get('value', 'Unknown Section') if col_data else 'Unknown Section'
-                    result += f"\n{indent}=== {title} ===\n"
-                    
-                    # Process subsections
-                    if 'Rows' in row:
-                        result += process_rows(row['Rows'], indent_level + 1)
+                        result += f"\n{indent}=== {title} ===\n"
+                        
+                        # Process subsections
+                        if 'Rows' in row:
+                            result += process_rows(row['Rows'], indent_level + 1)
                     
                     # Process summary
                     summary = row.get('Summary', {})
@@ -209,26 +209,26 @@ class QuickBooksOnlineAPI:
                             summary_label = summary_cols[0].get('value', 'Total')
                             summary_amount = summary_cols[-1].get('value', '0') if len(summary_cols) > 1 else '0'
                             result += f"{indent}--- {summary_label}: {format_amount(summary_amount)} ---\n"
-                
-                elif row_type == 'Data':
-                    # Data row
+                    
+                    elif row_type == 'Data':
+                        # Data row
                     col_data = row.get('ColData', [])
                     if col_data:
-                        # Get the first column (account name)
+                            # Get the first column (account name)
                         account_name = col_data[0].get('value', 'Unknown Account')
-                        # Get the last column (amount)
+                            # Get the last column (amount)
                         amount = col_data[-1].get('value', '0') if len(col_data) > 1 else '0'
-                        
-                        result += f"{indent}{account_name}: {format_amount(amount)}\n"
-                
-                elif row_type == 'Total':
-                    # Total row
+                            
+                            result += f"{indent}{account_name}: {format_amount(amount)}\n"
+                    
+                    elif row_type == 'Total':
+                        # Total row
                     col_data = row.get('ColData', [])
                     if col_data:
                         total_label = col_data[0].get('value', 'Total')
                         total_amount = col_data[-1].get('value', '0') if len(col_data) > 1 else '0'
-                        
-                        result += f"{indent}--- {total_label}: {format_amount(total_amount)} ---\n"
+                            
+                            result += f"{indent}--- {total_label}: {format_amount(total_amount)} ---\n"
                 
                 # Handle nested Row structures
                 if 'Row' in row:
@@ -258,6 +258,6 @@ Currency: {currency}
         if 'Row' in rows:
             formatted_report += process_rows(rows['Row'])
         else:
-            formatted_report += process_rows(rows)
+        formatted_report += process_rows(rows)
         
         return formatted_report 

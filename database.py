@@ -56,17 +56,23 @@ class QBOJob(Base):
 
 def get_database_url():
     """Get database URL from environment variables"""
-    # Vercel Postgres environment variables
+    # Prisma Postgres environment variables
+    database_url = os.getenv('DATABASE_URL')
     postgres_url = os.getenv('POSTGRES_URL')
-    postgres_host = os.getenv('POSTGRES_HOST')
-    postgres_database = os.getenv('POSTGRES_DATABASE')
-    postgres_username = os.getenv('POSTGRES_USERNAME')
-    postgres_password = os.getenv('POSTGRES_PASSWORD')
+    prisma_database_url = os.getenv('PRISMA_DATABASE_URL')
     
-    if postgres_url:
-        return postgres_url
-    elif all([postgres_host, postgres_database, postgres_username, postgres_password]):
-        return f"postgresql://{postgres_username}:{postgres_password}@{postgres_host}/{postgres_database}"
+    # Priority: DATABASE_URL > POSTGRES_URL > PRISMA_DATABASE_URL
+    if database_url:
+        logger.info("Using DATABASE_URL for database connection")
+        # Convert postgres:// to postgresql:// for SQLAlchemy
+        return database_url.replace('postgres://', 'postgresql://')
+    elif postgres_url:
+        logger.info("Using POSTGRES_URL for database connection")
+        # Convert postgres:// to postgresql:// for SQLAlchemy
+        return postgres_url.replace('postgres://', 'postgresql://')
+    elif prisma_database_url:
+        logger.info("Using PRISMA_DATABASE_URL for database connection")
+        return prisma_database_url
     else:
         # Fallback to SQLite for local development
         logger.warning("No Postgres environment variables found, using SQLite for local development")

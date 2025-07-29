@@ -114,25 +114,25 @@ class QBOAuthManager:
             
             if not company:
                 logger.info(f"No company found for realm_id: {realm_id}")
-                return None
-            
+            return None
+        
             access_token = company.access_token
             expires_at = company.expires_at
-            
-            if not access_token:
-                return None
-            
-            # Check if token is expired
+        
+        if not access_token:
+            return None
+        
+        # Check if token is expired
             if expires_at and datetime.now() >= expires_at:
                 logger.info(f"Token for {realm_id} expired at: {expires_at}. Refreshing!")
-                # Refresh the token
-                refreshed_info = self.refresh_access_token(realm_id)
-                if refreshed_info:
-                    return refreshed_info.get('access_token')
-                else:
-                    return None
-            
-            return access_token
+                    # Refresh the token
+                    refreshed_info = self.refresh_access_token(realm_id)
+                    if refreshed_info:
+                        return refreshed_info.get('access_token')
+                    else:
+                        return None
+        
+        return access_token
             
         except Exception as e:
             logger.error(f"Error getting access token for {realm_id}: {e}")
@@ -243,17 +243,17 @@ class QBOAuthManager:
             for company in companies:
                 status = "Valid"
                 if company.expires_at and datetime.now() >= company.expires_at:
-                    status = "Expired"
-                
-                company_data = {
+                        status = "Expired"
+            
+            company_data = {
                     'realm_id': company.realm_id,
-                    'status': status,
+                'status': status,
                     'created_at': company.created_at.isoformat(),
                     'expires_at': company.expires_at.isoformat()
-                }
-                
-                company_list.append(company_data)
+            }
             
+                company_list.append(company_data)
+        
             db.close()
             return company_list
         except Exception as e:
@@ -271,7 +271,7 @@ class QBOAuthManager:
                 db.delete(company)
                 db.commit()
                 db.close()
-                return True
+            return True
             else:
                 db.close()
                 return False
@@ -280,7 +280,7 @@ class QBOAuthManager:
             if db:
                 db.rollback()
                 db.close()
-            return False
+        return False
     
     def is_company_connected(self, realm_id: str) -> bool:
         """Check if a company is connected and has valid tokens"""
