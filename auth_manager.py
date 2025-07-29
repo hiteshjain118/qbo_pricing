@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 import requests
 from logging_config import setup_logging
+from database import get_db_session, QBOCompany, init_database
 
 from qbo_request_auth_params import QBORequestAuthParams
 
@@ -30,68 +31,112 @@ class QBOAuthManager:
         self.client_secret = request_auth_params.client_secret
         self.redirect_uri = request_auth_params.redirect_uri
         self.token_url = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
-        self.tokens_file = request_auth_params.tokens_file
-        self.tokens = self.load_tokens()
-        logger.info(f"Loaded {len(self.tokens)} tokens")
+        # Initialize database
+        init_database()
+        logger.info("Database initialized for auth manager")
 
     def load_tokens(self) -> Dict[str, Any]:
-        """Load tokens from file"""
+        """Load tokens from database"""
         try:
-            with open(self.tokens_file, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
+            db = get_db_session()
+            companies = db.query(QBOCompany).all()
+            tokens = {}
+            for company in companies:
+                tokens[company.realm_id] = {
+                    'realm_id': company.realm_id,
+                    'access_token': company.access_token,
+                    'refresh_token': company.refresh_token,
+                    'token_type': company.token_type,
+                    'expires_in': company.expires_in,
+                    'refresh_token_expires_in': company.refresh_token_expires_in,
+                    'created_at': company.created_at.isoformat(),
+                    'expires_at': company.expires_at.isoformat()
+                }
+            db.close()
+            return tokens
+        except Exception as e:
+            logger.error(f"Error loading tokens from database: {e}")
             return {}
     
     def save_tokens(self):
-        """Save tokens to file"""
-        # Ensure data directory exists
-        os.makedirs(os.path.dirname(self.tokens_file), exist_ok=True)
-        with open(self.tokens_file, 'w') as f:
-            json.dump(self.tokens, f, indent=2)
+        """Save tokens to database"""
+        # This method is kept for compatibility but tokens are saved directly
+        # when store_tokens is called
+        pass
     
     def store_tokens(self, realm_id: str, token_data: Dict[str, Any]):
-        """Store tokens for a company"""
-        self.tokens[realm_id] = {
-            'realm_id': realm_id,
-            'access_token': token_data.get('access_token'),
-            'refresh_token': token_data.get('refresh_token'),
-            'token_type': token_data.get('token_type'),
-            'expires_in': token_data.get('expires_in'),
-            'refresh_token_expires_in': token_data.get('x_refresh_token_expires_in'),
-            'created_at': datetime.now().isoformat(),
-            'expires_at': (datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))).isoformat()
-        }
-        self.save_tokens()
+        """Store tokens for a company in database"""
+        try:
+            db = get_db_session()
+            
+            # Check if company already exists
+            existing_company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            
+            expires_at = datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))
+            
+            if existing_company:
+                # Update existing company
+                existing_company.access_token = token_data.get('access_token')
+                existing_company.refresh_token = token_data.get('refresh_token')
+                existing_company.token_type = token_data.get('token_type')
+                existing_company.expires_in = token_data.get('expires_in')
+                existing_company.refresh_token_expires_in = token_data.get('x_refresh_token_expires_in')
+                existing_company.expires_at = expires_at
+            else:
+                # Create new company
+                new_company = QBOCompany(
+                    realm_id=realm_id,
+                    access_token=token_data.get('access_token'),
+                    refresh_token=token_data.get('refresh_token'),
+                    token_type=token_data.get('token_type'),
+                    expires_in=token_data.get('expires_in'),
+                    refresh_token_expires_in=token_data.get('x_refresh_token_expires_in'),
+                    expires_at=expires_at
+                )
+                db.add(new_company)
+            
+            db.commit()
+            db.close()
+            logger.info(f"Stored tokens for company {realm_id} in database")
+            
+        except Exception as e:
+            logger.error(f"Error storing tokens for company {realm_id}: {e}")
+            if db:
+                db.rollback()
+                db.close()
     
     def get_valid_access_token(self, realm_id: str) -> Optional[str]:
         """Get a valid access token, refreshing if necessary"""
-        logger.info(f"Tokens: {self.tokens}")
-        if realm_id not in self.tokens:
+        try:
+            db = get_db_session()
+            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            db.close()
+            
+            if not company:
+                logger.info(f"No company found for realm_id: {realm_id}")
+                return None
+            
+            access_token = company.access_token
+            expires_at = company.expires_at
+            
+            if not access_token:
+                return None
+            
+            # Check if token is expired
+            if expires_at and datetime.now() >= expires_at:
+                logger.info(f"Token for {realm_id} expired at: {expires_at}. Refreshing!")
+                # Refresh the token
+                refreshed_info = self.refresh_access_token(realm_id)
+                if refreshed_info:
+                    return refreshed_info.get('access_token')
+                else:
+                    return None
+            
+            return access_token
+            
+        except Exception as e:
+            logger.error(f"Error getting access token for {realm_id}: {e}")
             return None
-        
-        company_info = self.tokens[realm_id]
-        access_token = company_info.get('access_token')
-        expires_at = company_info.get('expires_at')
-        
-        if not access_token:
-            return None
-        
-        # Check if token is expired
-        if expires_at:
-            try:
-                expires_datetime = datetime.fromisoformat(expires_at)
-                if datetime.now() >= expires_datetime:
-                    logger.info(f"Token for {realm_id} expired at: {expires_datetime}. Refreshing!")
-                    # Refresh the token
-                    refreshed_info = self.refresh_access_token(realm_id)
-                    if refreshed_info:
-                        return refreshed_info.get('access_token')
-                    else:
-                        return None
-            except ValueError:
-                pass
-        
-        return access_token
     
     def refresh_access_token(self, realm_id: str) -> Optional[Dict[str, Any]]:
         """Refresh an expired access token"""
@@ -189,45 +234,68 @@ class QBOAuthManager:
             return None
     
     def get_companies(self) -> List[Dict[str, Any]]:
-        """Get list of connected companies"""
-        companies = []
-        
-        for realm_id, company_info in self.tokens.items():
-            expires_at = company_info.get('expires_at')
-            status = "Valid"
+        """Get list of connected companies from database"""
+        try:
+            db = get_db_session()
+            companies = db.query(QBOCompany).all()
+            company_list = []
             
-            if expires_at:
-                try:
-                    expires_datetime = datetime.fromisoformat(expires_at)
-                    if datetime.now() >= expires_datetime:
-                        status = "Expired"
-                except ValueError:
-                    status = "Unknown"
+            for company in companies:
+                status = "Valid"
+                if company.expires_at and datetime.now() >= company.expires_at:
+                    status = "Expired"
+                
+                company_data = {
+                    'realm_id': company.realm_id,
+                    'status': status,
+                    'created_at': company.created_at.isoformat(),
+                    'expires_at': company.expires_at.isoformat()
+                }
+                
+                company_list.append(company_data)
             
-            company_data = {
-                'realm_id': realm_id,
-                'status': status,
-                'created_at': company_info.get('created_at'),
-                'expires_at': expires_at
-            }
-            
-            companies.append(company_data)
-        
-        return companies
+            db.close()
+            return company_list
+        except Exception as e:
+            logger.error(f"Error getting companies: {e}")
+            return []
     
     def disconnect_company(self, realm_id: str) -> bool:
-        """Disconnect a company by removing its tokens"""
-        if realm_id in self.tokens:
-            logger.info(f"Disconnecting company {realm_id}")
-            del self.tokens[realm_id]
-            self.save_tokens()
-            return True
-        return False
+        """Disconnect a company by removing its tokens from database"""
+        try:
+            db = get_db_session()
+            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            
+            if company:
+                logger.info(f"Disconnecting company {realm_id}")
+                db.delete(company)
+                db.commit()
+                db.close()
+                return True
+            else:
+                db.close()
+                return False
+        except Exception as e:
+            logger.error(f"Error disconnecting company {realm_id}: {e}")
+            if db:
+                db.rollback()
+                db.close()
+            return False
     
     def is_company_connected(self, realm_id: str) -> bool:
         """Check if a company is connected and has valid tokens"""
-        return (realm_id in self.tokens and 
-                self.get_valid_access_token(realm_id) is not None) 
+        try:
+            db = get_db_session()
+            company = db.query(QBOCompany).filter(QBOCompany.realm_id == realm_id).first()
+            db.close()
+            
+            if not company:
+                return False
+            
+            return self.get_valid_access_token(realm_id) is not None
+        except Exception as e:
+            logger.error(f"Error checking if company {realm_id} is connected: {e}")
+            return False 
 
 
     def connect_to_quickbooks_uri(self):

@@ -19,6 +19,7 @@ from auth_manager import QBOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
 from balance_sheet_intent_server import BalancesheetIntentServer
 from logging_config import setup_logging
+from database import get_db_session, QBOJob, init_database
 
 # Setup logging
 setup_logging()
@@ -32,37 +33,78 @@ class QBOReportManager:
     
     def __init__(self, auth_params: QBORequestAuthParams):
         self.auth_manager = QBOAuthManager(auth_params)
-        self.jobs = self.load_jobs()
+        # Initialize database
+        init_database()
+        logger.info("Database initialized for report manager")
     
     def load_jobs(self) -> Dict[str, Any]:
-        """Load job configurations from file"""
+        """Load job configurations from database"""
         try:
-            with open(JOBS_FILE, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
+            db = get_db_session()
+            jobs = db.query(QBOJob).all()
+            jobs_dict = {}
+            for job in jobs:
+                jobs_dict[job.realm_id] = {
+                    'realm_id': job.realm_id,
+                    'email': job.email,
+                    'schedule_time': job.schedule_time,
+                    'next_run': job.next_run.isoformat() if job.next_run else None,
+                    'last_run': job.last_run.isoformat() if job.last_run else None
+                }
+            db.close()
+            return jobs_dict
+        except Exception as e:
+            logger.error(f"Error loading jobs from database: {e}")
             return {}
     
     def save_jobs(self):
-        """Save job configurations to file"""
-        # Ensure data directory exists
-        os.makedirs(os.path.dirname(JOBS_FILE), exist_ok=True)
-        with open(JOBS_FILE, 'w') as f:
-            json.dump(self.jobs, f, indent=2)
+        """Save job configurations to database"""
+        # This method is kept for compatibility but jobs are saved directly
+        # when store_job_config is called
+        pass
     
     def store_job_config(self, realm_id: str, email: str, schedule_time: str):
-        """Store job configuration for a company"""
-        self.jobs[realm_id] = {
-            'realm_id': realm_id,
-            'email': email,
-            'schedule_time': schedule_time,
-            'created_at': datetime.now().isoformat(),
-            'last_run': None,
-            'next_run': self.calculate_next_run(schedule_time)
-        }
-        self.save_jobs()
+        """Store job configuration for a company in database"""
+        try:
+            db = get_db_session()
+            
+            # Check if job already exists
+            existing_job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            
+            next_run = self.calculate_next_run_datetime(schedule_time)
+            
+            if existing_job:
+                # Update existing job
+                existing_job.email = email
+                existing_job.schedule_time = schedule_time
+                existing_job.next_run = next_run
+            else:
+                # Create new job
+                new_job = QBOJob(
+                    realm_id=realm_id,
+                    email=email,
+                    schedule_time=schedule_time,
+                    next_run=next_run
+                )
+                db.add(new_job)
+            
+            db.commit()
+            db.close()
+            logger.info(f"Stored job config for company {realm_id} in database")
+            
+        except Exception as e:
+            logger.error(f"Error storing job config for company {realm_id}: {e}")
+            if db:
+                db.rollback()
+                db.close()
     
     def calculate_next_run(self, schedule_time: str) -> str:
         """Calculate next run time based on schedule"""
+        next_run_dt = self.calculate_next_run_datetime(schedule_time)
+        return next_run_dt.isoformat()
+    
+    def calculate_next_run_datetime(self, schedule_time: str) -> datetime:
+        """Calculate next run time as datetime object"""
         now = datetime.now()
         hour, minute = map(int, schedule_time.split(':'))
         next_run = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
@@ -70,37 +112,49 @@ class QBOReportManager:
         if next_run <= now:
             next_run += timedelta(days=1)
         
-        return next_run.isoformat()
+        return next_run
     
     def get_jobs_to_run(self) -> List[Dict[str, Any]]:
-        """Get jobs that need to be executed"""
-        jobs_to_run = []
-        now = datetime.now()
-        
-        for realm_id, job_config in self.jobs.items():
-            next_run = job_config.get('next_run')
-            if next_run:
-                try:
-                    next_run_dt = datetime.fromisoformat(next_run)
-                    if now >= next_run_dt:
-                        jobs_to_run.append({
-                            'realm_id': realm_id,
-                            'email': job_config['email'],
-                            'schedule_time': job_config['schedule_time']
-                        })
-                except ValueError:
-                    continue
-        
-        return jobs_to_run
+        """Get jobs that need to be executed from database"""
+        try:
+            db = get_db_session()
+            now = datetime.now()
+            
+            # Get jobs where next_run is in the past
+            jobs = db.query(QBOJob).filter(QBOJob.next_run <= now).all()
+            
+            jobs_to_run = []
+            for job in jobs:
+                jobs_to_run.append({
+                    'realm_id': job.realm_id,
+                    'email': job.email,
+                    'schedule_time': job.schedule_time
+                })
+            
+            db.close()
+            return jobs_to_run
+        except Exception as e:
+            logger.error(f"Error getting jobs to run: {e}")
+            return []
     
     def update_job_run(self, realm_id: str):
-        """Update job run information"""
-        if realm_id in self.jobs:
-            self.jobs[realm_id]['last_run'] = datetime.now().isoformat()
-            self.jobs[realm_id]['next_run'] = self.calculate_next_run(
-                self.jobs[realm_id]['schedule_time']
-            )
-            self.save_jobs()
+        """Update job run information in database"""
+        try:
+            db = get_db_session()
+            job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            
+            if job:
+                job.last_run = datetime.now()
+                job.next_run = self.calculate_next_run_datetime(job.schedule_time)
+                db.commit()
+                logger.info(f"Updated job run for company {realm_id}")
+            
+            db.close()
+        except Exception as e:
+            logger.error(f"Error updating job run for company {realm_id}: {e}")
+            if db:
+                db.rollback()
+                db.close()
         
     def run_scheduled_jobs(self):
         """Run all scheduled jobs"""
@@ -157,23 +211,44 @@ class QBOReportManager:
         #     return False
       
     def get_job_for_realm(self, realm_id: str) -> Optional[Dict[str, Any]]:
-        """Get job configuration for a specific realm"""
-        if realm_id in self.jobs:
-            job_config = self.jobs[realm_id]
-            return {
-                'realm_id': realm_id,
-                'email': job_config['email'],
-                'schedule_time': job_config['schedule_time'],
-                'next_run': job_config['next_run'],
-                'last_run': job_config['last_run'],
-                'is_connected': self.auth_manager.is_company_connected(realm_id)
-            }
-        return None
+        """Get job configuration for a specific realm from database"""
+        try:
+            db = get_db_session()
+            job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            db.close()
+            
+            if job:
+                return {
+                    'realm_id': realm_id,
+                    'email': job.email,
+                    'schedule_time': job.schedule_time,
+                    'next_run': job.next_run.isoformat() if job.next_run else None,
+                    'last_run': job.last_run.isoformat() if job.last_run else None,
+                    'is_connected': self.auth_manager.is_company_connected(realm_id)
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Error getting job for realm {realm_id}: {e}")
+            return None
     
     def delete_job(self, realm_id: str) -> bool:
-        """Delete a job configuration"""
-        if realm_id in self.jobs:
-            del self.jobs[realm_id]
-            self.save_jobs()
-            return True
-        return False 
+        """Delete a job configuration from database"""
+        try:
+            db = get_db_session()
+            job = db.query(QBOJob).filter(QBOJob.realm_id == realm_id).first()
+            
+            if job:
+                db.delete(job)
+                db.commit()
+                db.close()
+                logger.info(f"Deleted job for company {realm_id}")
+                return True
+            else:
+                db.close()
+                return False
+        except Exception as e:
+            logger.error(f"Error deleting job for company {realm_id}: {e}")
+            if db:
+                db.rollback()
+                db.close()
+            return False 
