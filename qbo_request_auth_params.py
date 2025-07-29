@@ -2,8 +2,12 @@ import logging
 from dotenv import load_dotenv
 import os
 
-if os.getenv("VERCEL") is None:
+def is_prod_environment():
+    return os.getenv("VERCEL") is not None
+
+if not is_prod_environment():
     load_dotenv()
+
 
 class QBORequestAuthParams:    
     def __init__(self):
@@ -12,6 +16,8 @@ class QBORequestAuthParams:
         self.auth_url = os.getenv("QBO_AUTH_URL")
         self.tokens_file = os.getenv("QBO_TOKENS_FILE")
         self.redirect_uri = os.getenv("QBO_REDIRECT_URI")
-        # Use logger instead of direct logging
+        self.qbo_base_url = "https://quickbooks.api.intuit.com" if is_prod_environment() else "https://sandbox-quickbooks.api.intuit.com"
+        self.api_version = "v3"
+        
         logger = logging.getLogger(__name__)
-        logger.info(f"QBORequestAuthParams: {self.client_id}, {self.client_secret}, {self.auth_url}, {self.tokens_file}, {self.redirect_uri}")
+        logger.info(f"QBORequestAuthParams: {self.client_id}, {self.client_secret}, {self.auth_url}, {self.tokens_file}, {self.redirect_uri}, {self.qbo_base_url}")

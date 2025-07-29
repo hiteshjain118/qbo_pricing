@@ -15,7 +15,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import balance_sheet_intent_server
 from qbo_api import QuickBooksOnlineAPI
-from auth_manager import QBOAuthManager
+from oauth_manager import QBOOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
 from balance_sheet_intent_server import BalancesheetIntentServer
 from logging_config import setup_logging
@@ -25,14 +25,11 @@ from database import DB
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# Data storage file
-JOBS_FILE = "data/qbo_jobs.json"
-
-class QBOReportManager:
+class QBOReportScheduler:
     """Manages QBO report generation and job scheduling"""
     
     def __init__(self, auth_params: QBORequestAuthParams):
-        self.auth_manager = QBOAuthManager(auth_params)
+        self.auth_manager = QBOOAuthManager(auth_params)
     
     def load_jobs(self) -> Dict[str, Any]:
         """Load job configurations from database"""
@@ -181,9 +178,9 @@ class QBOReportManager:
             if not resend_api_key:
                 print("❌ RESEND_API_KEY environment variable not set")
                 continue
-            BalancesheetIntentServer(self.auth_manager, realm_id, resend_api_key).generate_and_send_report(email)
+            BalancesheetIntentServer(self.auth_manager.params, realm_id, resend_api_key).generate_and_send_report(email)
     
-    def generate_and_send_report(self, realm_id: str, email: str) -> bool:
+    def generate_and_send_report_for_realm(self, realm_id: str, email: str) -> bool:
         """Generate and send report for immediate execution"""
         print(f"Generating report for company {realm_id}")
         
@@ -200,7 +197,7 @@ class QBOReportManager:
         
         # Generate and send report
         # try:
-        success = BalancesheetIntentServer(self.auth_manager, realm_id, resend_api_key).generate_and_send_report(email)
+        success = BalancesheetIntentServer(self.auth_manager.params, realm_id, resend_api_key).generate_and_send_report(email)
         if success:
             self.update_job_run(realm_id)
         return success

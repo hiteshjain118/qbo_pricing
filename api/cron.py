@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from qbo_request_auth_params import QBORequestAuthParams
-from report_manager import QBOReportManager
+from report_manager import QBOReportScheduler
 
 # Add the parent directory to the path so we can import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,7 +18,7 @@ def run_scheduled_reports():
     try:
         # Initialize managers
         auth_params = QBORequestAuthParams()        
-        report_manager = QBOReportManager(auth_params)        
+        report_manager = QBOReportScheduler(auth_params)        
         report_manager.run_scheduled_jobs()
     except Exception as e:
         print(f"❌ Critical error in scheduled reports job: {e}")

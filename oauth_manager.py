@@ -22,14 +22,11 @@ from qbo_request_auth_params import QBORequestAuthParams
 setup_logging()
 logger = logging.getLogger(__name__)
 
-class QBOAuthManager:
+class QBOOAuthManager:
     """Manages QBO OAuth tokens and company authentication"""
     
     def __init__(self, request_auth_params: QBORequestAuthParams):
-        self.auth_url = request_auth_params.auth_url
-        self.client_id = request_auth_params.client_id
-        self.client_secret = request_auth_params.client_secret
-        self.redirect_uri = request_auth_params.redirect_uri
+        self.params = request_auth_params
         self.token_url = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer"
 
     def load_tokens(self) -> Dict[str, Any]:
@@ -152,7 +149,7 @@ class QBOAuthManager:
             }
             
             headers = {
-                'Authorization': f'Basic {base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()}',
+                'Authorization': f'Basic {base64.b64encode(f"{self.params.client_id}:{self.params.client_secret}".encode()).decode()}',
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
             
@@ -208,11 +205,11 @@ class QBOAuthManager:
         data = {
             'grant_type': 'authorization_code',
             'code': authorization_code,
-            'redirect_uri': self.redirect_uri
+            'redirect_uri': self.params.redirect_uri
         }
         
         headers = {
-            'Authorization': f'Basic {base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()}',
+            'Authorization': f'Basic {base64.b64encode(f"{self.params.client_id}:{self.params.client_secret}".encode()).decode()}',
             'Content-Type': 'application/x-www-form-urlencoded'
         }
         
@@ -311,20 +308,20 @@ class QBOAuthManager:
         from time import time
         
         # Debug logging
-        logger.info(f"Generating OAuth URL with client_id: {self.client_id}")
-        logger.info(f"Auth URL: {self.auth_url}")
-        logger.info(f"Redirect URI: {self.redirect_uri}")
+        logger.info(f"Generating OAuth URL with client_id: {self.params.client_id}")
+        logger.info(f"Auth URL: {self.params.auth_url}")
+        logger.info(f"Redirect URI: {self.params.redirect_uri}")
         
         params = {
-            'client_id': self.client_id,
+            'client_id': self.params.client_id,
             'response_type': 'code',
             'scope': 'com.intuit.quickbooks.accounting',
-            'redirect_uri': self.redirect_uri,
+            'redirect_uri': self.params.redirect_uri,
             'state': f'auth_{int(time())}'
         }
         
         # The auth_url already contains ?environment=production, so we append with &
-        oauth_url = f"{self.auth_url}&{urlencode(params)}"
+        oauth_url = f"{self.params.auth_url}&{urlencode(params)}"
         logger.info(f"Generated OAuth URL: {oauth_url}")
         
         return oauth_url

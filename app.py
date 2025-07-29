@@ -10,8 +10,8 @@ import time
 import logging
 from qbo_request_auth_params import QBORequestAuthParams
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
-from auth_manager import QBOAuthManager
-from report_manager import QBOReportManager
+from oauth_manager import QBOOAuthManager
+from report_manager import QBOReportScheduler
 from logging_config import setup_logging
 
 # Setup logging
@@ -24,8 +24,8 @@ app.secret_key = os.urandom(24)
 
 # Initialize managers
 auth_params = QBORequestAuthParams()
-auth_manager = QBOAuthManager(auth_params)
-report_manager = QBOReportManager(auth_params)
+auth_manager = QBOOAuthManager(auth_params)
+report_manager = QBOReportScheduler(auth_params)
 
 @app.route('/')
 def index():
@@ -159,17 +159,17 @@ def run_job_now():
         flash('Company not connected. Please connect QuickBooks first.', 'error')
         return redirect(url_for('index'))
     
-    # try:
+    try:
         # Generate and send report immediately
-    success = report_manager.generate_and_send_report(realm_id, email)
-    
-    if success:
-        flash('✅ Report generated and sent successfully!', 'success')
-    else:
-        flash('❌ Failed to generate or send report. Check logs for details.', 'error')
+        success = report_manager.generate_and_send_report_for_realm(realm_id, email)
+        
+        if success:
+            flash('✅ Report generated and sent successfully!', 'success')
+        else:
+            flash('❌ Failed to generate or send report. Check logs for details.', 'error')
             
-    # except Exception as e:
-    #     flash(f'❌ Error running job: {str(e)}', 'error')
+    except Exception as e:
+        flash(f'❌ Error running job: {str(e)}', 'error')
     
     return redirect(url_for('index'))
 

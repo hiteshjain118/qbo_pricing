@@ -1,6 +1,7 @@
+import traceback
 from typing import Optional, Dict, Any
 from qbo_api import QuickBooksOnlineAPI
-from auth_manager import QBOAuthManager
+from oauth_manager import QBOOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
 from datetime import datetime
 from email.mime.text import MIMEText
@@ -18,26 +19,18 @@ logger = logging.getLogger(__name__)
 class BalancesheetIntentServer:
     
     def __init__(self, auth_params: QBORequestAuthParams, realm_id: str, resend_api_key: str):
-        self.auth_manager = QBOAuthManager(auth_params)
+        self.auth_params = auth_params
+        self.oauth_manager = QBOOAuthManager(auth_params)
         self.realm_id = realm_id
         resend.api_key = resend_api_key
 
     def get_balance_sheet(self) -> Optional[Dict[str, Any]]:
         """Get balance sheet report for a company"""
         # Get valid access token
-        access_token = self.auth_manager.get_valid_access_token(self.realm_id)
-        
-        if not access_token:
-            print(f"No valid access token for company {self.realm_id}")
-            return None
         
         # Initialize QBO API
-        qbo = QuickBooksOnlineAPI(
-            client_id=self.auth_manager.client_id,
-            client_secret=self.auth_manager.client_secret,
-            access_token=access_token,
-            realm_id=self.realm_id
-        )
+        access_token = self.oauth_manager.get_valid_access_token(self.realm_id)
+        qbo = QuickBooksOnlineAPI(self.auth_params, self.realm_id, access_token)
         
         # Query Balance Sheet
         try:
@@ -46,9 +39,12 @@ class BalancesheetIntentServer:
             logger.info(f"Raw balance sheet data: {len(balance_sheet)}")
             formatted =  qbo.format_balance_sheet(balance_sheet)
             logger.info(f"Formatted balance sheet: {len(formatted)} characters")
-            return formatted
+            # return formatted
         except Exception as e:
+            #print stack trace
             logging.error(f"Error querying balance sheet for company {self.realm_id}: {e}")
+            logging.error(traceback.format_exc())
+            # logging.error(f"Error querying balance sheet for company {self.realm_id}: {e}")
             return None
             
     

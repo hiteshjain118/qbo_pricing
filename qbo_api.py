@@ -5,6 +5,7 @@ import os
 from typing import Dict, Any
 import logging
 from logging_config import setup_logging
+from qbo_request_auth_params import QBORequestAuthParams
 
 # Setup logging
 setup_logging()
@@ -14,26 +15,18 @@ class QuickBooksOnlineAPI:
     """
     QuickBooks Online API client for querying reports
     """
-    SANDBOX_URL = "https://sandbox-quickbooks.api.intuit.com"
-    PRODUCTION_URL = "https://quickbooks.api.intuit.com"
     
-    def __init__(self, client_id: str, client_secret: str, access_token: str, realm_id: str):
+    def __init__(self, params: QBORequestAuthParams, realm_id: str, access_token: str):
         """
         Initialize QBO API client
         
         Args:
-            client_id: OAuth 2.0 client ID from Intuit Developer
-            client_secret: OAuth 2.0 client secret from Intuit Developer
-            access_token: Valid access token for authentication
-            realm_id: Company ID (realm ID) from QBO
+            params: QBORequestAuthParams object containing client_id, client_secret, access_token, and base_url
         """
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.access_token = access_token
+        self.params = params
         self.realm_id = realm_id
-        self.base_url = self.SANDBOX_URL
-        self.api_version = "v3"
-        
+        self.access_token = access_token
+
     def _get_headers(self) -> Dict[str, str]:
         """Get headers for API requests"""
         return {
@@ -59,7 +52,7 @@ class QuickBooksOnlineAPI:
             end_date = datetime.now().strftime("%Y-%m-%d")
             
         # QBO Report API endpoint for Profit and Loss
-        url = f"{self.base_url}/{self.api_version}/company/{self.realm_id}/reports/ProfitAndLoss"
+        url = f"{self.params.qbo_base_url}/{self.params.api_version}/company/{self.realm_id}/reports/ProfitAndLoss"
         
         # Query parameters for the report
         params = {
@@ -108,7 +101,7 @@ class QuickBooksOnlineAPI:
         if not as_of_date:
             as_of_date = datetime.now().strftime("%Y-%m-%d")
             
-        url = f"{self.base_url}/{self.api_version}/company/{self.realm_id}/reports/BalanceSheet"
+        url = f"{self.params.qbo_base_url}/{self.params.api_version}/company/{self.realm_id}/reports/BalanceSheet"
         
         params = {
             "as_of_date": as_of_date,
@@ -149,8 +142,6 @@ class QuickBooksOnlineAPI:
         
         def format_amount(amount_str: str) -> str:
             """Format amount string to currency format"""
-            if not amount_str or amount_str == '0':
-                return '$0.00'
             try:
                 amount = float(amount_str)
                 return f"${amount:,.2f}"
@@ -192,15 +183,6 @@ class QuickBooksOnlineAPI:
                     if 'Rows' in row:
                         result += process_rows(row['Rows'], indent_level + 1)
                 
-                # Process summary
-                summary = row.get('Summary', {})
-                if summary:
-                    summary_cols = summary.get('ColData', [])
-                    if summary_cols:
-                        summary_label = summary_cols[0].get('value', 'Total')
-                        summary_amount = summary_cols[-1].get('value', '0') if len(summary_cols) > 1 else '0'
-                        result += f"{indent}--- {summary_label}: {format_amount(summary_amount)} ---\n"
-                
                 elif row_type == 'Data':
                     # Data row
                     col_data = row.get('ColData', [])
@@ -220,6 +202,15 @@ class QuickBooksOnlineAPI:
                         total_amount = col_data[-1].get('value', '0') if len(col_data) > 1 else '0'
                         
                         result += f"{indent}--- {total_label}: {format_amount(total_amount)} ---\n"
+                
+                # Process summary
+                summary = row.get('Summary', {})
+                if summary:
+                    summary_cols = summary.get('ColData', [])
+                    if summary_cols:
+                        summary_label = summary_cols[0].get('value', 'Total')
+                        summary_amount = summary_cols[-1].get('value', '0') if len(summary_cols) > 1 else '0'
+                        result += f"{indent}--- {summary_label}: {format_amount(summary_amount)} ---\n"
                 
                 # Handle nested Row structures
                 if 'Row' in row:
