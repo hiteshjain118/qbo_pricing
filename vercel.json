@@ -1,14 +1,21 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron",
       "schedule": "0 9 * * *"
     }
-  ],
-  "functions": {
-    "api/cron.py": {
-      "runtime": "python3.9"
-    }
-  }
+  ]
 } 
