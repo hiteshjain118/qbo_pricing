@@ -1,0 +1,100 @@
+{
+  "QueryResponse": {
+    "Item": [
+      {
+        "Id": "101",
+        "Name": "Test:Beef Bone Test Product",
+        "FullyQualifiedName": "Test:Beef Bone Test Product",
+        "UnitPrice": 5.50,
+        "PurchaseCost": 4.00,
+        "Sku": "BEEF-BONE-001",
+        "TrackQtyOnHand": true,
+        "QtyOnHand": 100,
+        "ReorderPoint": 10,
+        "InvStartDate": "2025-01-01",
+        "Type": "Inventory",
+        "Active": true,
+        "MetaData": {
+          "CreateTime": "2025-01-01T10:00:00-08:00",
+          "LastUpdatedTime": "2025-01-01T10:00:00-08:00"
+        }
+      },
+      {
+        "Id": "102",
+        "Name": "Test:Beef Flank Test Product",
+        "FullyQualifiedName": "Test:Beef Flank Test Product",
+        "UnitPrice": 6.25,
+        "PurchaseCost": 4.50,
+        "Sku": "BEEF-FLANK-001",
+        "TrackQtyOnHand": true,
+        "QtyOnHand": 75,
+        "ReorderPoint": 15,
+        "InvStartDate": "2025-01-01",
+        "Type": "Inventory",
+        "Active": true,
+        "MetaData": {
+          "CreateTime": "2025-01-01T10:00:00-08:00",
+          "LastUpdatedTime": "2025-01-01T10:00:00-08:00"
+        }
+      },
+      {
+        "Id": "103",
+        "Name": "Test:Beef Loin Test Product",
+        "FullyQualifiedName": "Test:Beef Loin Test Product",
+        "UnitPrice": 7.25,
+        "PurchaseCost": 5.25,
+        "Sku": "BEEF-LOIN-001",
+        "TrackQtyOnHand": true,
+        "QtyOnHand": 50,
+        "ReorderPoint": 20,
+        "InvStartDate": "2025-01-01",
+        "Type": "Inventory",
+        "Active": true,
+        "MetaData": {
+          "CreateTime": "2025-01-01T10:00:00-08:00",
+          "LastUpdatedTime": "2025-01-01T10:00:00-08:00"
+        }
+      },
+      {
+        "Id": "104",
+        "Name": "Test:Pork Hocks Test Product",
+        "FullyQualifiedName": "Test:Pork Hocks Test Product",
+        "UnitPrice": 3.75,
+        "PurchaseCost": 2.50,
+        "Sku": "PORK-HOCKS-001",
+        "TrackQtyOnHand": true,
+        "QtyOnHand": 200,
+        "ReorderPoint": 25,
+        "InvStartDate": "2025-01-01",
+        "Type": "Inventory",
+        "Active": true,
+        "MetaData": {
+          "CreateTime": "2025-01-01T10:00:00-08:00",
+          "LastUpdatedTime": "2025-01-01T10:00:00-08:00"
+        }
+      },
+      {
+        "Id": "105",
+        "Name": "Test:Chicken Wing Test Product",
+        "FullyQualifiedName": "Test:Chicken Wing Test Product",
+        "UnitPrice": 4.50,
+        "PurchaseCost": 3.00,
+        "Sku": "CHICKEN-WING-001",
+        "TrackQtyOnHand": true,
+        "QtyOnHand": 150,
+        "ReorderPoint": 30,
+        "InvStartDate": "2025-01-01",
+        "Type": "Inventory",
+        "Active": true,
+        "MetaData": {
+          "CreateTime": "2025-01-01T10:00:00-08:00",
+          "LastUpdatedTime": "2025-01-01T10:00:00-08:00"
+        }
+      }
+    ],
+    "maxResults": 5,
+    "startPosition": 1,
+    "totalCount": 5
+  },
+  "time": "2025-07-30T13:15:56.081-07:00"
+} 

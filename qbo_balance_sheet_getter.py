@@ -11,7 +11,7 @@ from qbo_request_auth_params import QBORequestAuthParams
 setup_logging()
 logger = logging.getLogger(__name__)
 
-class QuickBooksOnlineAPI:
+class QBOBalanceSheetGetter:
     """
     QuickBooks Online API client for querying reports
     """
@@ -34,59 +34,6 @@ class QuickBooksOnlineAPI:
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
-    
-    def query_profit_and_loss_report(self, start_date: str = None, end_date: str = None) -> Dict[str, Any]:
-        """
-        Query Profit and Loss report from QBO
-        
-        Args:
-            start_date: Start date in YYYY-MM-DD format (defaults to 30 days ago)
-            end_date: End date in YYYY-MM-DD format (defaults to today)
-            
-        Returns:
-            Dictionary containing the P&L report data
-        """
-        if not start_date:
-            start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-        if not end_date:
-            end_date = datetime.now().strftime("%Y-%m-%d")
-            
-        # QBO Report API endpoint for Profit and Loss
-        url = f"{self.params.qbo_base_url}/{self.params.api_version}/company/{self.realm_id}/reports/ProfitAndLoss"
-        
-        # Query parameters for the report
-        params = {
-            "start_date": start_date,
-            "end_date": end_date,
-            "accounting_method": "Accrual",  # or "Cash"
-            "minorversion": "65"  # API minor version
-        }
-        
-        try:
-            response = requests.get(url, headers=self._get_headers(), params=params)
-            response.raise_for_status()
-            
-            # Log intuit_tid if present in response headers
-            intuit_tid = response.headers.get('intuit_tid')
-            if intuit_tid:
-                logger.info(f"P&L Report API Response - intuit_tid: {intuit_tid}")
-            else:
-                logger.info("P&L Report API Response - no intuit_tid found in headers")
-            
-            return response.json()
-            
-        except requests.exceptions.RequestException as e:
-            print(f"Error querying P&L report: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                print(f"Response status: {e.response.status_code}")
-                print(f"Response body: {e.response.text}")
-                # Log intuit_tid even in error responses
-                intuit_tid = e.response.headers.get('intuit_tid')
-                if intuit_tid:
-                    logger.error(f"P&L Report API Error Response - intuit_tid: {intuit_tid}")
-                else:
-                    logger.error("P&L Report API Error Response - no intuit_tid found in headers")
-            return None
     
     def query_balance_sheet_report(self, as_of_date: str = None) -> Dict[str, Any]:
         """

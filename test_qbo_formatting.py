@@ -4,13 +4,14 @@ Unit tests for QBO API formatting functions
 """
 
 import unittest
+import json
 import sys
 import os
 
-# Add the current directory to the path so we can import our modules
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add the parent directory to the path so we can import our modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from qbo_api import QuickBooksOnlineAPI
+from qbo_balance_sheet_getter import QBOBalanceSheetGetter
 
 
 class TestQBOFormatting(unittest.TestCase):
@@ -212,7 +213,7 @@ class TestQBOFormatting(unittest.TestCase):
     
     def test_format_balance_sheet_with_valid_data(self):
         """Test formatting balance sheet with valid QBO API response"""
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(self.sample_balance_sheet_data)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(self.sample_balance_sheet_data)
         
         # Verify the formatted output contains expected sections
         self.assertIn('BalanceSheet', formatted)
@@ -241,10 +242,10 @@ class TestQBOFormatting(unittest.TestCase):
     
     def test_format_balance_sheet_with_empty_data(self):
         """Test formatting balance sheet with empty data"""
-        formatted = QuickBooksOnlineAPI.format_balance_sheet({})
+        formatted = QBOBalanceSheetGetter.format_balance_sheet({})
         self.assertEqual(formatted, "No balance sheet data available")
         
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(None)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(None)
         self.assertEqual(formatted, "No balance sheet data available")
     
     def test_format_balance_sheet_with_missing_rows(self):
@@ -253,7 +254,7 @@ class TestQBOFormatting(unittest.TestCase):
             'Header': {'ReportName': 'BalanceSheet', 'Currency': 'USD'},
             'Columns': {'Column': []}
         }
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(data_without_rows)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(data_without_rows)
         self.assertIn('BalanceSheet', formatted)
         self.assertIn('USD', formatted)
     
@@ -264,13 +265,13 @@ class TestQBOFormatting(unittest.TestCase):
             'Columns': {'Column': []},
             'Rows': {}
         }
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(data_with_empty_rows)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(data_with_empty_rows)
         self.assertIn('BalanceSheet', formatted)
         self.assertIn('USD', formatted)
     
     def test_format_balance_sheet_amount_formatting(self):
         """Test that amounts are properly formatted"""
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(self.sample_balance_sheet_data)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(self.sample_balance_sheet_data)
         
         # Test positive amounts
         self.assertIn('$1,201.00', formatted)
@@ -284,7 +285,7 @@ class TestQBOFormatting(unittest.TestCase):
     
     def test_format_balance_sheet_structure(self):
         """Test that the formatted output has proper structure"""
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(self.sample_balance_sheet_data)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(self.sample_balance_sheet_data)
         
         # Check for proper section headers
         self.assertIn('=== ASSETS ===', formatted)
@@ -299,7 +300,7 @@ class TestQBOFormatting(unittest.TestCase):
     
     def test_format_balance_sheet_nested_structure(self):
         """Test that nested structures are properly handled"""
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(self.sample_balance_sheet_data)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(self.sample_balance_sheet_data)
         
         # Verify nested account structure is preserved
         lines = formatted.split('\n')

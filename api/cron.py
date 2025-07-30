@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from qbo_request_auth_params import QBORequestAuthParams
-from report_manager import QBOReportScheduler
+from report_scheduler import QBOReportScheduler
 
 # Add the parent directory to the path so we can import our modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

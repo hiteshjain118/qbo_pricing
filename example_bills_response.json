@@ -1,0 +1,481 @@
+{
+  "QueryResponse": {
+    "Bill": [
+      {
+        "APAccountRef": {
+          "name": "Accounts Payable (A/P)",
+          "value": "48"
+        },
+        "Balance": 7750.06,
+        "CurrencyRef": {
+          "name": "United States Dollar",
+          "value": "USD"
+        },
+        "DueDate": "2025-07-30",
+        "Id": "80357",
+        "Line": [
+          {
+            "Amount": 186.21,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "1",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "walt:Beef Bone \"Walt's\" \u725b\u9aa8",
+                "value": "942"
+              },
+              "Qty": 290.96,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 0.64
+            },
+            "LineNum": 1,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 3240.6,
+            "CustomExtensions": [],
+            "Description": "Mikes noodle house",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "2",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "walt:Beef Flank Meat \"Walt's\" \u725b\u8169",
+                "value": "1085"
+              },
+              "Qty": 662.7,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 4.89
+            },
+            "LineNum": 2,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 4275.12,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "3",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "walt:Beef Loin 100% \u725b\u91cc\u810a \"Walt's\" - Fresh \u51b7\u9c9c",
+                "value": "1080"
+              },
+              "Qty": 728.3,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 5.87
+            },
+            "LineNum": 3,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 48.13,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "4",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Beef Marrow Gut \"Walt's\" \u725b\u5927\u80a0",
+                "value": "1341"
+              },
+              "Qty": 31.05,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.55
+            },
+            "LineNum": 4,
+            "LinkedTxn": []
+          }
+        ],
+        "MetaData": {
+          "CreateTime": "2025-07-30T09:49:42-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-30T09:49:42-07:00"
+        },
+        "SyncToken": "0",
+        "TotalAmt": 7750.06,
+        "TxnDate": "2025-07-30",
+        "VendorAddr": {
+          "Id": "29713",
+          "Line1": "walt",
+          "Line2": "Walt's"
+        },
+        "VendorRef": {
+          "name": "Walt's",
+          "value": "441"
+        },
+        "domain": "QBO",
+        "sparse": false
+      },
+      {
+        "APAccountRef": {
+          "name": "Accounts Payable (A/P)",
+          "value": "48"
+        },
+        "Balance": 3479.0,
+        "CurrencyRef": {
+          "name": "United States Dollar",
+          "value": "USD"
+        },
+        "DueDate": "2025-07-30",
+        "Id": "80355",
+        "Line": [
+          {
+            "Amount": 3479.0,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "1",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Roaster Pig \u5168\u732a",
+                "value": "1247"
+              },
+              "Qty": 1420,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 2.45
+            },
+            "LineNum": 1,
+            "LinkedTxn": []
+          }
+        ],
+        "MetaData": {
+          "CreateTime": "2025-07-30T09:45:15-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-30T09:45:15-07:00"
+        },
+        "SyncToken": "0",
+        "TotalAmt": 3479.0,
+        "TxnDate": "2025-07-30",
+        "VendorAddr": {
+          "Id": "29711",
+          "Line1": "clausen",
+          "Line2": "clausen"
+        },
+        "VendorRef": {
+          "name": "Clausen Meat Company",
+          "value": "382"
+        },
+        "domain": "QBO",
+        "sparse": false
+      },
+      {
+        "APAccountRef": {
+          "name": "Accounts Payable (A/P)",
+          "value": "48"
+        },
+        "Balance": 14338.66,
+        "CurrencyRef": {
+          "name": "United States Dollar",
+          "value": "USD"
+        },
+        "DueDate": "2025-07-29",
+        "Id": "80309",
+        "Line": [
+          {
+            "Amount": 297.68,
+            "CustomExtensions": [],
+            "Description": "44.1 lbs  per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "1",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pork Hocks \u732a\u8098-\u732a\u8e44\u8180 smithfield",
+                "value": "532"
+              },
+              "Qty": 220.5,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.35
+            },
+            "LineNum": 1,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 1067.98,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "2",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Beef Short Plate \"Painted Hill\" Choice \u80a5\u725b",
+                "value": "833"
+              },
+              "Qty": 318.8,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.35
+            },
+            "LineNum": 2,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 1086.14,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "3",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pork Collar Butt Boneless CT \"Seaboard/IBP\"",
+                "value": "1079"
+              },
+              "Qty": 351.5,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.09
+            },
+            "LineNum": 3,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 404.57,
+            "CustomExtensions": [],
+            "Description": "\uff5e10 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "4",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pork Jowl \u732a\u9888\u8089 \u201ckeken\"",
+                "value": "1006"
+              },
+              "Qty": 109.64,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.69
+            },
+            "LineNum": 4,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 1007.6,
+            "CustomExtensions": [],
+            "Description": "22 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "5",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "AA meat:Beef AA omasum \u725b\u767e\u53f6",
+                "value": "512"
+              },
+              "Qty": 440,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 2.29
+            },
+            "LineNum": 5,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 1657.63,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "6",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "\"St Helens\"Angus Choice Bone-in Beef Short Rib #020427",
+                "value": "1124"
+              },
+              "Qty": 222.5,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 7.45
+            },
+            "LineNum": 6,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 1183.14,
+            "CustomExtensions": [],
+            "Description": "~33 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "7",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pork Spareribs Medium \"Seaboard\" \u6392\u9aa8",
+                "value": "894"
+              },
+              "Qty": 626,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.89
+            },
+            "LineNum": 7,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 3294.65,
+            "CustomExtensions": [],
+            "Description": "~65 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "8",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pork Butt Boneless \u65b0\u9c9c\u732a\u80a9\u8089 \"IBP or Seaboard\" - FRESH",
+                "value": "492"
+              },
+              "Qty": 1743.2,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.89
+            },
+            "LineNum": 8,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 1340.0,
+            "CustomExtensions": [],
+            "Description": "40 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "9",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Chicken Midjoint Wing \"Raeford\"#4955 - \u5927\u9e21\u4e2d\u7fc5",
+                "value": "467"
+              },
+              "Qty": 400,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.35
+            },
+            "LineNum": 9,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 313.15,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "10",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pork Sirloin \"Smithfield\" #14621 \u732a\u897f\u51b7",
+                "value": "554"
+              },
+              "Qty": 196.95,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.59
+            },
+            "LineNum": 10,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 1173.12,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "11",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pork Spareribs Medium \"Seaboard/ibp\" \u6392\u9aa8 - Office",
+                "value": "693"
+              },
+              "Qty": 620.7,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.89
+            },
+            "LineNum": 11,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 713.0,
+            "CustomExtensions": [],
+            "Description": "31 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "12",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "EJ:Pig Feet \u732a\u811a \uff08\u672a\u5207\uff09- Office",
+                "value": "478"
+              },
+              "Qty": 620,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.15
+            },
+            "LineNum": 12,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 800.0,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "13",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Chicken Rooster 12H \"Winglee\" - Office",
+                "value": "1147"
+              },
+              "Qty": 5,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 160
+            },
+            "LineNum": 13,
+            "LinkedTxn": []
+          }
+        ],
+        "MetaData": {
+          "CreateTime": "2025-07-29T12:56:27-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-29T12:56:27-07:00"
+        },
+        "SyncToken": "0",
+        "TotalAmt": 14338.66,
+        "TxnDate": "2025-07-29",
+        "VendorRef": {
+          "name": "EJ foodco",
+          "value": "67"
+        },
+        "domain": "QBO",
+        "sparse": false
+      }
+    ],
+    "maxResults": 3,
+    "startPosition": 1,
+    "totalCount": 3
+  },
+  "time": "2025-07-30T13:15:56.081-07:00"
+}

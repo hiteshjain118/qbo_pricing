@@ -62,7 +62,7 @@ class QBOOAuthManager:
             # Check if company already exists
             existing_company = db.query(DB.get_company_model()).filter(DB.get_company_model().realm_id == realm_id).first()
             
-            expires_at = datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))
+            expires_at = datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))
             
             if existing_company:
                 # Update existing company
@@ -72,6 +72,7 @@ class QBOOAuthManager:
                 existing_company.expires_in = token_data.get('expires_in')
                 existing_company.refresh_token_expires_in = token_data.get('x_refresh_token_expires_in')
                 existing_company.expires_at = expires_at
+                logger.info(f"Updated tokens for existing company {realm_id} in database")
             else:
                 # Create new company
                 new_company = DB.get_company_model()(
@@ -86,7 +87,7 @@ class QBOOAuthManager:
                 db.add(new_company)
             
             db.commit()
-            logger.info(f"Stored tokens for company {realm_id} in database")
+            logger.info(f"Added tokens for new company {realm_id} to database")
             
         except Exception as e:
             logger.error(f"Error storing tokens for company {realm_id}: {e}")
@@ -95,8 +96,9 @@ class QBOOAuthManager:
         finally:
             db.close()
     
-    def get_valid_access_token(self, realm_id: str) -> Optional[str]:
+    def get_valid_access_token_not_throws(self, realm_id: str) -> Optional[str]:
         """Get a valid access token, refreshing if necessary"""
+    
         try:
             db = DB.get_session()
             company = db.query(DB.get_company_model()).filter(DB.get_company_model().realm_id == realm_id).first()
@@ -112,7 +114,7 @@ class QBOOAuthManager:
                 return None
             
             # Check if token is expired
-            if expires_at and datetime.now() >= expires_at:
+            if expires_at and datetime.utcnow() >= expires_at:
                 logger.info(f"Token for {realm_id} expired at: {expires_at}. Refreshing!")
                 # Refresh the token
                 refreshed_info = self.refresh_access_token(realm_id)
@@ -160,7 +162,7 @@ class QBOOAuthManager:
                 # Log intuit_tid if present in response headers
                 intuit_tid = response.headers.get('intuit_tid')
                 if intuit_tid:
-                    logger.info(f"Token Refresh API Response - intuit_tid: {intuit_tid}")
+                    logger.info(f"Token Refresh API Response - intuit_tid: {intuit_tid}, response: {response.json()}")
                 else:
                     logger.info("Token Refresh API Response - no intuit_tid found in headers")
                 
@@ -171,7 +173,7 @@ class QBOOAuthManager:
                 company.refresh_token = token_data.get('refresh_token', refresh_token)
                 company.expires_in = token_data.get('expires_in')
                 company.refresh_token_expires_in = token_data.get('x_refresh_token_expires_in')
-                company.expires_at = datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))
+                company.expires_at = datetime.utcnow() + timedelta(seconds=token_data.get('expires_in', 3600))
                 
                 db.commit()
                 
@@ -213,28 +215,17 @@ class QBOOAuthManager:
             'Content-Type': 'application/x-www-form-urlencoded'
         }
         
-        try:
-            response = requests.post(self.token_url, data=data, headers=headers)
-            response.raise_for_status()
-            
-            # Log intuit_tid if present in response headers
-            intuit_tid = response.headers.get('intuit_tid')
-            if intuit_tid:
-                logger.info(f"Token Exchange API Response - intuit_tid: {intuit_tid}")
-            else:
-                logger.info("Token Exchange API Response - no intuit_tid found in headers")
-            
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Error exchanging code for tokens: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                # Log intuit_tid even in error responses
-                intuit_tid = e.response.headers.get('intuit_tid')
-                if intuit_tid:
-                    logger.error(f"Token Exchange API Error Response - intuit_tid: {intuit_tid}")
-                else:
-                    logger.error("Token Exchange API Error Response - no intuit_tid found in headers")
-            return None
+        response = requests.post(self.token_url, data=data, headers=headers)
+        response.raise_for_status()
+        
+        # Log intuit_tid if present in response headers
+        intuit_tid = response.headers.get('intuit_tid')
+        if intuit_tid:
+            logger.info(f"Token Exchange API Response - intuit_tid: {intuit_tid}, response: {response.json()}")
+        else:
+            logger.info("Token Exchange API Response - no intuit_tid found in headers")
+        
+        return response.json()
     
     def get_companies(self) -> List[Dict[str, Any]]:
         """Get list of connected companies from database"""
@@ -245,7 +236,8 @@ class QBOOAuthManager:
             
             for company in companies:
                 status = "Valid"
-                if company.expires_at and datetime.now() >= company.expires_at:
+                # Use UTC comparison for proper timezone handling
+                if company.expires_at and datetime.utcnow() >= company.expires_at:
                     status = "Expired"
                 
                 company_data = {
@@ -276,30 +268,19 @@ class QBOOAuthManager:
                 db.commit()
                 return True
             else:
+                logger.info(f"Company {realm_id} not found in database")
                 return False
         except Exception as e:
             logger.error(f"Error disconnecting company {realm_id}: {e}")
             if db:
                 db.rollback()
-            return False
+            raise Exception(f"Error disconnecting company {realm_id}: {e}")
         finally:
             db.close()
     
     def is_company_connected(self, realm_id: str) -> bool:
         """Check if a company is connected and has valid tokens"""
-        try:
-            db = DB.get_session()
-            company = db.query(DB.get_company_model()).filter(DB.get_company_model().realm_id == realm_id).first()
-            
-            if not company:
-                return False
-            
-            return self.get_valid_access_token(realm_id) is not None
-        except Exception as e:
-            logger.error(f"Error checking if company {realm_id} is connected: {e}")
-            return False
-        finally:
-            db.close()
+        return self.get_valid_access_token_not_throws(realm_id) is not None
 
 
     def connect_to_quickbooks_uri(self):

@@ -13,11 +13,12 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import balance_sheet_intent_server
-from qbo_api import QuickBooksOnlineAPI
+import intent_servers.balance_sheet_server as balance_sheet_server
+from intent_servers.pricing_delta_server import PricingDeltaServer
+from qbo_balance_sheet_getter import QBOBalanceSheetGetter
 from oauth_manager import QBOOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
-from balance_sheet_intent_server import BalancesheetIntentServer
+from intent_servers.balance_sheet_server import BalanceSheetServer
 from logging_config import setup_logging
 from database import DB
 
@@ -30,33 +31,6 @@ class QBOReportScheduler:
     
     def __init__(self, auth_params: QBORequestAuthParams):
         self.auth_manager = QBOOAuthManager(auth_params)
-    
-    def load_jobs(self) -> Dict[str, Any]:
-        """Load job configurations from database"""
-        try:
-            db = DB.get_session()
-            jobs = db.query(DB.get_job_model()).all()
-            jobs_dict = {}
-            for job in jobs:
-                jobs_dict[job.realm_id] = {
-                    'realm_id': job.realm_id,
-                    'email': job.email,
-                    'schedule_time': job.schedule_time,
-                    'next_run': job.next_run.isoformat() if job.next_run else None,
-                    'last_run': job.last_run.isoformat() if job.last_run else None
-                }
-            return jobs_dict
-        except Exception as e:
-            logger.error(f"Error loading jobs from database: {e}")
-            return {}
-        finally:
-            db.close()
-    
-    def save_jobs(self):
-        """Save job configurations to database"""
-        # This method is kept for compatibility but jobs are saved directly
-        # when store_job_config is called
-        pass
     
     def store_job_config(self, realm_id: str, email: str, schedule_time: str):
         """Store job configuration for a company in database"""
@@ -92,11 +66,6 @@ class QBOReportScheduler:
                 db.rollback()
         finally:
             db.close()
-    
-    def calculate_next_run(self, schedule_time: str) -> str:
-        """Calculate next run time based on schedule"""
-        next_run_dt = self.calculate_next_run_datetime(schedule_time)
-        return next_run_dt.isoformat()
     
     def calculate_next_run_datetime(self, schedule_time: str) -> datetime:
         """Calculate next run time as datetime object"""
@@ -167,44 +136,18 @@ class QBOReportScheduler:
             email = job['email']
             
             print(f"Processing job for company {realm_id}")
+            self.generate_and_send_report_for_realm(realm_id, email)
             
-            # Check if company is still connected
-            if not self.auth_manager.is_company_connected(realm_id):
-                print(f"Company {realm_id} is no longer connected, skipping job")
-                continue
-            
-            # Generate and send report
-            resend_api_key = os.getenv('RESEND_API_KEY')
-            if not resend_api_key:
-                print("❌ RESEND_API_KEY environment variable not set")
-                continue
-            BalancesheetIntentServer(self.auth_manager.params, realm_id, resend_api_key).generate_and_send_report(email)
     
     def generate_and_send_report_for_realm(self, realm_id: str, email: str) -> bool:
         """Generate and send report for immediate execution"""
         print(f"Generating report for company {realm_id}")
         
-        # Check if company is still connected
-        if not self.auth_manager.is_company_connected(realm_id):
-            print(f"Company {realm_id} is no longer connected")
-            return False
-        
-        # Get Resend API key
-        resend_api_key = os.getenv('RESEND_API_KEY')
-        if not resend_api_key:
-            print("❌ RESEND_API_KEY environment variable not set")
-            return False
-        
-        # Generate and send report
-        # try:
-        success = BalancesheetIntentServer(self.auth_manager.params, realm_id, resend_api_key).generate_and_send_report(email)
+        # success = BalanceSheetServer(self.auth_manager.params, realm_id).generate_and_send_report(email)
+        success = PricingDeltaServer(self.auth_manager.params, realm_id).generate_and_send_report(email)
         if success:
             self.update_job_run(realm_id)
         return success
-        # except Exception as e:
-        #     logger.error(f"❌ Error generating and sending report: {e}")
-        #     raise e
-        #     return False
       
     def get_job_for_realm(self, realm_id: str) -> Optional[Dict[str, Any]]:
         """Get job configuration for a specific realm from database"""

@@ -11,7 +11,7 @@ import logging
 from qbo_request_auth_params import QBORequestAuthParams
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 from oauth_manager import QBOOAuthManager
-from report_manager import QBOReportScheduler
+from report_scheduler import QBOReportScheduler
 from logging_config import setup_logging
 
 # Setup logging
@@ -45,7 +45,7 @@ def index():
 @app.route('/connect', methods=['POST'])
 def connect_quickbooks():
     print(f"Connecting QuickBooks")
-    print(f"Auth manager client_id: {auth_manager.client_id}")
+    print(f"Auth manager client_id: {auth_manager.params.client_id}")
     auth_url = auth_manager.connect_to_quickbooks_uri()
     print(f"Redirecting to: {auth_url}")
     return redirect(auth_url)

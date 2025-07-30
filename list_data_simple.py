@@ -21,6 +21,20 @@ def format_datetime(dt):
         return pst_time.strftime('%Y-%m-%d %H:%M:%S PST')
     return 'None'
 
+def is_token_expired(expires_at):
+    """Check if token is expired using UTC comparison"""
+    if not expires_at:
+        return True
+    
+    # Get current time in UTC
+    utc_now = datetime.now(pytz.UTC)
+    
+    # Convert expires_at to UTC if it doesn't have timezone info
+    if expires_at.tzinfo is None:
+        expires_at = pytz.utc.localize(expires_at)
+    
+    return utc_now >= expires_at
+
 def list_all_data():
     """List all data from both sandbox and production tables"""
     print("🗄️  Complete Database Contents Report")
@@ -54,10 +68,10 @@ def list_all_data():
                 
                 # Show token status
                 if company[8]:
-                    if datetime.now() < company[8]:
-                        print(f"    Status: ✅ Valid")
-                    else:
+                    if is_token_expired(company[8]):
                         print(f"    Status: ❌ Expired")
+                    else:
+                        print(f"    Status: ✅ Valid")
         
         # Sandbox Jobs
         print("\n🌱 SANDBOX JOBS")
@@ -103,10 +117,10 @@ def list_all_data():
                 
                 # Show token status
                 if company[8]:
-                    if datetime.now() < company[8]:
-                        print(f"    Status: ✅ Valid")
-                    else:
+                    if is_token_expired(company[8]):
                         print(f"    Status: ❌ Expired")
+                    else:
+                        print(f"    Status: ✅ Valid")
         
         # Production Jobs
         print("\n🚀 PRODUCTION JOBS")

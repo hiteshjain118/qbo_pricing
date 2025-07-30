@@ -1,0 +1,481 @@
+{
+  "QueryResponse": {
+    "Bill": [
+      {
+        "APAccountRef": {
+          "name": "Accounts Payable (A/P)",
+          "value": "48"
+        },
+        "Balance": 1250.50,
+        "CurrencyRef": {
+          "name": "United States Dollar",
+          "value": "USD"
+        },
+        "DueDate": "2025-07-30",
+        "Id": "1001",
+        "Line": [
+          {
+            "Amount": 125.75,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "1",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Beef Bone Test Product",
+                "value": "101"
+              },
+              "Qty": 25.5,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 4.93
+            },
+            "LineNum": 1,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 324.60,
+            "CustomExtensions": [],
+            "Description": "Test vendor description",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "2",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Beef Flank Test Product",
+                "value": "102"
+              },
+              "Qty": 66.27,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 4.89
+            },
+            "LineNum": 2,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 427.12,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "3",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Beef Loin Test Product",
+                "value": "103"
+              },
+              "Qty": 72.83,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 5.87
+            },
+            "LineNum": 3,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 48.13,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "4",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Beef Marrow Test Product",
+                "value": "104"
+              },
+              "Qty": 31.05,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.55
+            },
+            "LineNum": 4,
+            "LinkedTxn": []
+          }
+        ],
+        "MetaData": {
+          "CreateTime": "2025-07-30T09:49:42-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-30T09:49:42-07:00"
+        },
+        "SyncToken": "0",
+        "TotalAmt": 925.60,
+        "TxnDate": "2025-07-30",
+        "VendorAddr": {
+          "Id": "29713",
+          "Line1": "Test Vendor",
+          "Line2": "Test Company"
+        },
+        "VendorRef": {
+          "name": "Test Vendor",
+          "value": "441"
+        },
+        "domain": "QBO",
+        "sparse": false
+      },
+      {
+        "APAccountRef": {
+          "name": "Accounts Payable (A/P)",
+          "value": "48"
+        },
+        "Balance": 347.90,
+        "CurrencyRef": {
+          "name": "United States Dollar",
+          "value": "USD"
+        },
+        "DueDate": "2025-07-30",
+        "Id": "1002",
+        "Line": [
+          {
+            "Amount": 347.90,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "1",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Roaster Pig Test Product",
+                "value": "105"
+              },
+              "Qty": 142.0,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 2.45
+            },
+            "LineNum": 1,
+            "LinkedTxn": []
+          }
+        ],
+        "MetaData": {
+          "CreateTime": "2025-07-30T09:45:15-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-30T09:45:15-07:00"
+        },
+        "SyncToken": "0",
+        "TotalAmt": 347.90,
+        "TxnDate": "2025-07-30",
+        "VendorAddr": {
+          "Id": "29711",
+          "Line1": "Test Clausen",
+          "Line2": "Test Meat Company"
+        },
+        "VendorRef": {
+          "name": "Test Clausen Meat Company",
+          "value": "382"
+        },
+        "domain": "QBO",
+        "sparse": false
+      },
+      {
+        "APAccountRef": {
+          "name": "Accounts Payable (A/P)",
+          "value": "48"
+        },
+        "Balance": 1433.87,
+        "CurrencyRef": {
+          "name": "United States Dollar",
+          "value": "USD"
+        },
+        "DueDate": "2025-07-29",
+        "Id": "1003",
+        "Line": [
+          {
+            "Amount": 29.77,
+            "CustomExtensions": [],
+            "Description": "Test description 44.1 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "1",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pork Hocks Test Product",
+                "value": "106"
+              },
+              "Qty": 22.05,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.35
+            },
+            "LineNum": 1,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 106.80,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "2",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Beef Short Plate Test Product",
+                "value": "107"
+              },
+              "Qty": 31.88,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.35
+            },
+            "LineNum": 2,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 108.61,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "3",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pork Collar Test Product",
+                "value": "108"
+              },
+              "Qty": 35.15,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.09
+            },
+            "LineNum": 3,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 40.46,
+            "CustomExtensions": [],
+            "Description": "Test description ~10 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "4",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pork Jowl Test Product",
+                "value": "109"
+              },
+              "Qty": 10.96,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.69
+            },
+            "LineNum": 4,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 100.76,
+            "CustomExtensions": [],
+            "Description": "Test description 22 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "5",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Beef AA Test Product",
+                "value": "110"
+              },
+              "Qty": 44.0,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 2.29
+            },
+            "LineNum": 5,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 165.76,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "6",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Angus Choice Test Product",
+                "value": "111"
+              },
+              "Qty": 22.25,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 7.45
+            },
+            "LineNum": 6,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 118.31,
+            "CustomExtensions": [],
+            "Description": "Test description ~33 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "7",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pork Spareribs Test Product",
+                "value": "112"
+              },
+              "Qty": 62.6,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.89
+            },
+            "LineNum": 7,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 329.47,
+            "CustomExtensions": [],
+            "Description": "Test description ~65 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "8",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pork Butt Test Product",
+                "value": "113"
+              },
+              "Qty": 174.32,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.89
+            },
+            "LineNum": 8,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 134.0,
+            "CustomExtensions": [],
+            "Description": "Test description 40 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "9",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Chicken Wing Test Product",
+                "value": "114"
+              },
+              "Qty": 40.0,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 3.35
+            },
+            "LineNum": 9,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 31.32,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "10",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pork Sirloin Test Product",
+                "value": "115"
+              },
+              "Qty": 19.7,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.59
+            },
+            "LineNum": 10,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 117.31,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "11",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pork Spareribs Office Test Product",
+                "value": "116"
+              },
+              "Qty": 62.07,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.89
+            },
+            "LineNum": 11,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 71.3,
+            "CustomExtensions": [],
+            "Description": "Test description 31 lbs per box",
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "12",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Pig Feet Test Product",
+                "value": "117"
+              },
+              "Qty": 62.0,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 1.15
+            },
+            "LineNum": 12,
+            "LinkedTxn": []
+          },
+          {
+            "Amount": 80.0,
+            "CustomExtensions": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "Id": "13",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "name": "Test:Chicken Rooster Test Product",
+                "value": "118"
+              },
+              "Qty": 0.5,
+              "TaxCodeRef": {
+                "value": "NON"
+              },
+              "UnitPrice": 160.0
+            },
+            "LineNum": 13,
+            "LinkedTxn": []
+          }
+        ],
+        "MetaData": {
+          "CreateTime": "2025-07-29T12:56:27-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-29T12:56:27-07:00"
+        },
+        "SyncToken": "0",
+        "TotalAmt": 1433.87,
+        "TxnDate": "2025-07-29",
+        "VendorRef": {
+          "name": "Test EJ Food Company",
+          "value": "67"
+        },
+        "domain": "QBO",
+        "sparse": false
+      }
+    ],
+    "maxResults": 3,
+    "startPosition": 1,
+    "totalCount": 3
+  },
+  "time": "2025-07-30T13:15:56.081-07:00"
+} 

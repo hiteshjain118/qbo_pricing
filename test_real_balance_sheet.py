@@ -4,7 +4,13 @@ Test the balance sheet formatting with real QuickBooks API data
 """
 
 import unittest
-from qbo_api import QuickBooksOnlineAPI
+import sys
+import os
+
+# Add the parent directory to the path so we can import our modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from qbo_balance_sheet_getter import QBOBalanceSheetGetter
 
 class TestRealBalanceSheetFormatting(unittest.TestCase):
     
@@ -135,7 +141,7 @@ class TestRealBalanceSheetFormatting(unittest.TestCase):
     
     def test_format_real_balance_sheet(self):
         """Test formatting with real QuickBooks API data"""
-        formatted = QuickBooksOnlineAPI.format_balance_sheet(self.real_balance_sheet_data)
+        formatted = QBOBalanceSheetGetter.format_balance_sheet(self.real_balance_sheet_data)
         
         # Check that the formatted output contains expected sections
         self.assertIn('=== ASSETS ===', formatted)
