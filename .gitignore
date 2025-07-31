@@ -35,3 +35,8 @@ Thumbs.db
 *.tmp
 *.temp 
 .vercel
+
+# Example response files
+example_bill_response.json
+example_bills_response.json
+example_inventory_response.json
