@@ -51,21 +51,18 @@ class TestInventoryRetriever(unittest.TestCase):
         
         print(f"   ✅ Extracted {len(inventory_df)} inventory items")
         
-        # Verify structure of extracted data
-        expected_columns = ['product_name', 'fully_qualified_name', 'unit_price', 'purchase_cost']
+        # Verify structure of extracted data - updated to match current interface
+        expected_columns = ['product_name', 'inventory_price']
         for col in expected_columns:
             self.assertIn(col, inventory_df.columns)
         
         # Verify data types
         self.assertTrue(inventory_df['product_name'].dtype == 'object')  # string
-        self.assertTrue(inventory_df['fully_qualified_name'].dtype == 'object')  # string
-        self.assertTrue(inventory_df['unit_price'].dtype in ['float64', 'int64'])
-        self.assertTrue(inventory_df['purchase_cost'].dtype in ['float64', 'int64'])
+        self.assertTrue(inventory_df['inventory_price'].dtype in ['float64', 'int64'])
         
         # Verify values are reasonable
         self.assertTrue(len(inventory_df['product_name'].iloc[0]) > 0)
-        self.assertTrue(inventory_df['unit_price'].min() >= 0)
-        self.assertTrue(inventory_df['purchase_cost'].min() >= 0)
+        self.assertTrue(inventory_df['inventory_price'].min() >= 0)
         
         print("   ✅ All inventory items have correct structure and data types")
         
@@ -73,7 +70,7 @@ class TestInventoryRetriever(unittest.TestCase):
         print("\n📦 Sample inventory data:")
         for i, row in inventory_df.head(3).iterrows():
             print(f"   {i+1}. {row['product_name']}")
-            print(f"      Unit Price: ${row['unit_price']:.2f}, Purchase Cost: ${row['purchase_cost']:.2f}")
+            print(f"      Inventory Price: ${row['inventory_price']:.2f}")
         
         return inventory_df
     
@@ -118,7 +115,7 @@ class TestInventoryRetriever(unittest.TestCase):
             print("\n📦 Sample inventory data from API:")
             for i, row in inventory_df.head(3).iterrows():
                 print(f"   {i+1}. {row['product_name']}")
-                print(f"      Unit Price: ${row['unit_price']:.2f}, Purchase Cost: ${row['purchase_cost']:.2f}")
+                print(f"      Inventory Price: ${row['inventory_price']:.2f}")
         
         return inventory_df
     
@@ -132,7 +129,7 @@ class TestInventoryRetriever(unittest.TestCase):
         inventory_df = self.retriever._extract_cols(mock_response)
         
         # Verify all items have required fields
-        expected_columns = ['product_name', 'fully_qualified_name', 'unit_price', 'purchase_cost']
+        expected_columns = ['product_name', 'inventory_price']
         for col in expected_columns:
             self.assertIn(col, inventory_df.columns)
         
@@ -156,48 +153,37 @@ class TestInventoryRetriever(unittest.TestCase):
         sample_data = [
             {
                 'product_name': 'Test:Beef Bone Test Product',
-                'fully_qualified_name': 'Test:Beef Bone Test Product',
-                'unit_price': 5.50,
-                'purchase_cost': 4.00
+                'inventory_price': 5.50
             },
             {
                 'product_name': 'Test:Beef Flank Test Product',
-                'fully_qualified_name': 'Test:Beef Flank Test Product',
-                'unit_price': 6.25,
-                'purchase_cost': 4.50
+                'inventory_price': 6.25
             },
             {
                 'product_name': 'Test:Beef Loin Test Product',
-                'fully_qualified_name': 'Test:Beef Loin Test Product',
-                'unit_price': 7.25,
-                'purchase_cost': 5.25
+                'inventory_price': 7.25
             }
         ]
         
         inventory_df = pd.DataFrame(sample_data)
         
         # Calculate totals
-        total_unit_price = inventory_df['unit_price'].sum()
-        total_purchase_cost = inventory_df['purchase_cost'].sum()
-        total_profit_margin = total_unit_price - total_purchase_cost
+        total_inventory_price = inventory_df['inventory_price'].sum()
+        unique_products = len(inventory_df['product_name'].unique())
         
         # Verify calculations
-        expected_unit_price = 5.50 + 6.25 + 7.25
-        expected_purchase_cost = 4.00 + 4.50 + 5.25
-        expected_profit_margin = expected_unit_price - expected_purchase_cost
+        expected_inventory_price = 5.50 + 6.25 + 7.25
+        expected_products = 3
         
-        self.assertAlmostEqual(total_unit_price, expected_unit_price, places=2)
-        self.assertAlmostEqual(total_purchase_cost, expected_purchase_cost, places=2)
-        self.assertAlmostEqual(total_profit_margin, expected_profit_margin, places=2)
+        self.assertAlmostEqual(total_inventory_price, expected_inventory_price, places=2)
+        self.assertEqual(unique_products, expected_products)
         
-        print(f"   ✅ Total Unit Price: ${total_unit_price:.2f}")
-        print(f"   ✅ Total Purchase Cost: ${total_purchase_cost:.2f}")
-        print(f"   ✅ Total Profit Margin: ${total_profit_margin:.2f}")
+        print(f"   ✅ Total Inventory Price: ${total_inventory_price:.2f}")
+        print(f"   ✅ Unique Products: {unique_products}")
         
         return {
-            'total_unit_price': total_unit_price,
-            'total_purchase_cost': total_purchase_cost,
-            'total_profit_margin': total_profit_margin
+            'total_inventory_price': total_inventory_price,
+            'unique_products': unique_products
         }
     
     def test_describe_for_logging(self):
@@ -206,9 +192,9 @@ class TestInventoryRetriever(unittest.TestCase):
         
         # Create sample data
         sample_data = [
-            {'product_name': 'Product A', 'unit_price': 10.0, 'purchase_cost': 8.0},
-            {'product_name': 'Product B', 'unit_price': 15.0, 'purchase_cost': 12.0},
-            {'product_name': 'Product A', 'unit_price': 10.0, 'purchase_cost': 8.0},  # Duplicate
+            {'product_name': 'Product A', 'inventory_price': 10.0},
+            {'product_name': 'Product B', 'inventory_price': 15.0},
+            {'product_name': 'Product A', 'inventory_price': 10.0},  # Duplicate
         ]
         
         df = pd.DataFrame(sample_data)

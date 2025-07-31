@@ -162,7 +162,7 @@ class QBOOAuthManager:
                 # Log intuit_tid if present in response headers
                 intuit_tid = response.headers.get('intuit_tid')
                 if intuit_tid:
-                    logger.info(f"Token Refresh API Response - intuit_tid: {intuit_tid}, response: {response.json()}")
+                    logger.info(f"Token Refresh API Response - intuit_tid: {intuit_tid}")
                 else:
                     logger.info("Token Refresh API Response - no intuit_tid found in headers")
                 
@@ -221,7 +221,7 @@ class QBOOAuthManager:
         # Log intuit_tid if present in response headers
         intuit_tid = response.headers.get('intuit_tid')
         if intuit_tid:
-            logger.info(f"Token Exchange API Response - intuit_tid: {intuit_tid}, response: {response.json()}")
+            logger.info(f"Token Exchange API Response - intuit_tid: {intuit_tid}")
         else:
             logger.info("Token Exchange API Response - no intuit_tid found in headers")
         

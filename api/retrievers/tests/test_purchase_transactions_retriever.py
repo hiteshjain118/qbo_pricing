@@ -51,30 +51,25 @@ class TestPurchaseTransactionsRetriever(unittest.TestCase):
         
         print(f"   ✅ Extracted {len(bills_df)} line items")
         
-        # Verify structure of extracted data
-        expected_columns = ['product_name', 'quantity', 'rate', 'amount', 'transaction_date']
+        # Verify structure of extracted data - updated to match current interface
+        expected_columns = ['product_name', 'purchase_price']
         for col in expected_columns:
             self.assertIn(col, bills_df.columns)
         
         # Verify data types
         self.assertTrue(bills_df['product_name'].dtype == 'object')  # string
-        self.assertTrue(bills_df['quantity'].dtype in ['float64', 'int64'])
-        self.assertTrue(bills_df['rate'].dtype in ['float64', 'int64'])
-        self.assertTrue(bills_df['amount'].dtype in ['float64', 'int64'])
-        self.assertTrue(bills_df['transaction_date'].dtype == 'object')  # string
+        self.assertTrue(bills_df['purchase_price'].dtype in ['float64', 'int64'])
         
         # Verify values are reasonable
         self.assertTrue(len(bills_df['product_name'].iloc[0]) > 0)
-        self.assertTrue(bills_df['quantity'].min() >= 0)
-        self.assertTrue(bills_df['rate'].min() >= 0)
-        self.assertTrue(bills_df['amount'].min() >= 0)
+        self.assertTrue(bills_df['purchase_price'].min() >= 0)
         
         print("   ✅ All extracted items have correct structure and data types")
         
         # Show some sample data
         print("\n📋 Sample extracted data:")
         for i, row in bills_df.head(3).iterrows():
-            print(f"   {i+1}. {row['product_name']} - Qty: {row['quantity']}, Rate: ${row['rate']:.2f}, Amount: ${row['amount']:.2f}")
+            print(f"   {i+1}. {row['product_name']} - Purchase Price: ${row['purchase_price']:.2f}")
         
         return bills_df
     
@@ -118,7 +113,7 @@ class TestPurchaseTransactionsRetriever(unittest.TestCase):
             # Show sample data
             print("\n📋 Sample bill transactions from API:")
             for i, row in bills_df.head(3).iterrows():
-                print(f"   {i+1}. {row['product_name']} - Qty: {row['quantity']}, Rate: ${row['rate']:.2f}, Amount: ${row['amount']:.2f}")
+                print(f"   {i+1}. {row['product_name']} - Purchase Price: ${row['purchase_price']:.2f}")
         
         return bills_df
     
@@ -132,7 +127,7 @@ class TestPurchaseTransactionsRetriever(unittest.TestCase):
         bills_df = self.retriever._extract_cols(mock_response)
         
         # Verify all items have required fields
-        expected_columns = ['product_name', 'quantity', 'rate', 'amount', 'transaction_date']
+        expected_columns = ['product_name', 'purchase_price']
         for col in expected_columns:
             self.assertIn(col, bills_df.columns)
         
@@ -156,56 +151,37 @@ class TestPurchaseTransactionsRetriever(unittest.TestCase):
         sample_data = [
             {
                 'product_name': 'Test:Beef Bone Test Product',
-                'quantity': 25.5,
-                'rate': 4.93,
-                'amount': 125.75,
-                'transaction_date': '2025-07-30'
+                'purchase_price': 4.93
             },
             {
                 'product_name': 'Test:Beef Flank Test Product',
-                'quantity': 66.27,
-                'rate': 4.89,
-                'amount': 324.60,
-                'transaction_date': '2025-07-30'
+                'purchase_price': 4.89
             },
             {
                 'product_name': 'Test:Beef Loin Test Product',
-                'quantity': 72.83,
-                'rate': 5.87,
-                'amount': 427.12,
-                'transaction_date': '2025-07-29'
+                'purchase_price': 5.87
             }
         ]
         
         bills_df = pd.DataFrame(sample_data)
         
         # Calculate totals
-        total_quantity = bills_df['quantity'].sum()
-        total_amount = bills_df['amount'].sum()
+        total_purchase_price = bills_df['purchase_price'].sum()
         unique_products = len(bills_df['product_name'].unique())
-        unique_dates = len(bills_df['transaction_date'].unique())
         
         # Verify calculations
-        expected_quantity = 25.5 + 66.27 + 72.83
-        expected_amount = 125.75 + 324.60 + 427.12
+        expected_purchase_price = 4.93 + 4.89 + 5.87
         expected_products = 3
-        expected_dates = 2
         
-        self.assertAlmostEqual(total_quantity, expected_quantity, places=2)
-        self.assertAlmostEqual(total_amount, expected_amount, places=2)
+        self.assertAlmostEqual(total_purchase_price, expected_purchase_price, places=2)
         self.assertEqual(unique_products, expected_products)
-        self.assertEqual(unique_dates, expected_dates)
         
-        print(f"   ✅ Total Quantity: {total_quantity:.2f}")
-        print(f"   ✅ Total Amount: ${total_amount:.2f}")
+        print(f"   ✅ Total Purchase Price: ${total_purchase_price:.2f}")
         print(f"   ✅ Unique Products: {unique_products}")
-        print(f"   ✅ Unique Dates: {unique_dates}")
         
         return {
-            'total_quantity': total_quantity,
-            'total_amount': total_amount,
-            'unique_products': unique_products,
-            'unique_dates': unique_dates
+            'total_purchase_price': total_purchase_price,
+            'unique_products': unique_products
         }
     
     def test_describe_for_logging(self):
@@ -214,9 +190,9 @@ class TestPurchaseTransactionsRetriever(unittest.TestCase):
         
         # Create sample data
         sample_data = [
-            {'product_name': 'Product A', 'quantity': 10, 'amount': 100.0, 'transaction_date': '2025-07-30'},
-            {'product_name': 'Product B', 'quantity': 15, 'amount': 150.0, 'transaction_date': '2025-07-30'},
-            {'product_name': 'Product A', 'quantity': 5, 'amount': 50.0, 'transaction_date': '2025-07-29'},
+            {'product_name': 'Product A', 'purchase_price': 10.0},
+            {'product_name': 'Product B', 'purchase_price': 15.0},
+            {'product_name': 'Product A', 'purchase_price': 10.0},
         ]
         
         df = pd.DataFrame(sample_data)
