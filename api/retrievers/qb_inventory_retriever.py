@@ -28,8 +28,8 @@ class QBInventoryRetriever(QBRetriever):
             paginated_response = self._call_api()
             page_cols = self._extract_cols(paginated_response)
             cols = pd.concat([cols, page_cols])
-            # if len(page_cols) < self.page_size:
-            break
+            if len(page_cols) < self.page_size:
+                break
             self.start_pos += self.page_size    
 
         return cols
