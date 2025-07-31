@@ -3,6 +3,7 @@ import json
 from typing import Any
 
 import pandas as pd
+import pytz
 import requests
 from api.retrievers.qb_retriever import QBRetriever
 from qbo_request_auth_params import QBORequestAuthParams
@@ -15,9 +16,10 @@ logger = logging.getLogger(__name__)
 
 class QBPurchaseTransactionsRetriever(QBRetriever):
     
-    def __init__(self, auth_params: QBORequestAuthParams, realm_id: str, report_date: str = None):
+    def __init__(self, auth_params: QBORequestAuthParams, realm_id: str, report_dt: datetime):
         super().__init__(auth_params, realm_id)
-        self.report_date = report_date
+        
+        self.report_date = report_dt.astimezone(pytz.timezone('America/Los_Angeles')).strftime("%Y-%m-%d")
 
     def _extract_cols(self, response: str) -> pd.DataFrame:
         """

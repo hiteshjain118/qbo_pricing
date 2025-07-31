@@ -27,7 +27,7 @@ class PricingDeltaServer:
         self.qb_purchase_transactions_retriever = QBPurchaseTransactionsRetriever(
             auth_params=auth_params, 
             realm_id=realm_id,
-            report_date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            report_dt=datetime.now()
         )
         
         
