@@ -5,22 +5,16 @@ QBO Report Manager
 Handles balance sheet queries, job scheduling, and report generation
 """
 
-import os
-import json
-import smtplib
-import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import intent_servers.balance_sheet_server as balance_sheet_server
-from intent_servers.pricing_delta_server import PricingDeltaServer
-from qbo_balance_sheet_getter import QBOBalanceSheetGetter
+from typing import List, Dict, Any, Optional
+
+from database import DB
 from oauth_manager import QBOOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
-from intent_servers.balance_sheet_server import BalanceSheetServer
+from intent_servers.pricing_delta_server import PricingDeltaServer
+from retrievers.qb_file_retriever import QBFileRetriever
 from logging_config import setup_logging
-from database import DB
+import logging
 
 # Setup logging
 setup_logging()
@@ -144,7 +138,17 @@ class QBOReportScheduler:
         print(f"Generating report for company {realm_id}")
         
         # success = BalanceSheetServer(self.auth_manager.params, realm_id).generate_and_send_report(email)
-        success = PricingDeltaServer(self.auth_manager.params, realm_id).generate_and_send_report(email)
+        # success = PricingDeltaServer.init_with_file_retrievers(
+        #     inventory_file_path=QBFileRetriever.INVENTORY_FILE_PATH,
+        #     purchase_transactions_file_path=QBFileRetriever.PURCHASE_TRANSACTIONS_FILE_PATH,
+        #     realm_id=realm_id,
+        #     email=email
+        # ).serve()
+        success = PricingDeltaServer.init_with_api_retrievers(
+            auth_params=self.auth_manager.params, 
+            realm_id=realm_id, 
+            email=email,
+        ).serve()
         if success:
             self.update_job_run(realm_id)
         return success

@@ -1,0 +1,627 @@
+{
+  "QueryResponse": {
+    "Bill": [
+      {
+        "DueDate": "2025-07-31",
+        "Balance": 247.2,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "80478",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2025-07-31T10:04:51-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-31T10:04:51-07:00"
+        },
+        "TxnDate": "2025-07-31",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "Line": [
+          {
+            "Id": "1",
+            "LineNum": 1,
+            "Amount": 247.2,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1200",
+                "name": "EJ:Chicken Midjoint Wing Agrousuper #101165 鸡翅中"
+              },
+              "UnitPrice": 3.09,
+              "Qty": 80,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          }
+        ],
+        "VendorRef": {
+          "value": "67",
+          "name": "EJ foodco"
+        },
+        "APAccountRef": {
+          "value": "48",
+          "name": "Accounts Payable (A/P)"
+        },
+        "TotalAmt": 247.2
+      },
+      {
+        "DueDate": "2025-07-31",
+        "Balance": 26986.45,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "80477",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2025-07-31T10:04:20-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-31T10:04:20-07:00"
+        },
+        "TxnDate": "2025-07-31",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "Line": [
+          {
+            "Id": "1",
+            "LineNum": 1,
+            "Amount": 163.33,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1316",
+                "name": "EJ:\"Draper Valley\" Chicken WOG Fresh #3.90 整鸡"
+              },
+              "UnitPrice": 2.01,
+              "Qty": 81.26,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "2",
+            "LineNum": 2,
+            "Amount": 3193.33,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "820",
+                "name": "EJ:Beef Brisket Boneless Choice \"IBP\" 牛胸肉 - Office"
+              },
+              "UnitPrice": 4.9,
+              "Qty": 651.7,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "3",
+            "LineNum": 3,
+            "Amount": 265.73,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "17",
+                "name": "EJ:Beef Back Rib 牛排骨 \"Truewest\" - Office"
+              },
+              "UnitPrice": 1.89,
+              "Qty": 140.6,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "4",
+            "LineNum": 4,
+            "Amount": 1181.51,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1253",
+                "name": "EJ:Truewest Beef 4-Bone Choice Chuck Short Rib 牛仔骨 - Office"
+              },
+              "UnitPrice": 6.39,
+              "Qty": 184.9,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "5",
+            "LineNum": 5,
+            "Amount": 65.91,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1163",
+                "name": "Beef Feet \"Swift\" 牛脚"
+              },
+              "UnitPrice": 2.69,
+              "Qty": 24.5,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "6",
+            "LineNum": 6,
+            "Amount": 1316.77,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1044",
+                "name": "EJ:Beef Chuck Roll Choice \"Double R/IBP\" 牛上脑 - Office"
+              },
+              "UnitPrice": 4.55,
+              "Qty": 289.4,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "7",
+            "LineNum": 7,
+            "Amount": 422.35,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "70",
+                "name": "EJ:Pork Loin Bone-In WHL Smithfield 带骨猪里脊 - Office"
+              },
+              "UnitPrice": 1.39,
+              "Qty": 303.85,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "8",
+            "LineNum": 8,
+            "Amount": 527.39,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1291",
+                "name": "EJ:Oxtail Fresh 牛尾 - Fresh"
+              },
+              "UnitPrice": 6.19,
+              "Qty": 85.2,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "9",
+            "LineNum": 9,
+            "Description": "40lb per box",
+            "Amount": 3300.0,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1336",
+                "name": "Chicken Party Wing Frozen \"Ariztia\" 鸡翅"
+              },
+              "UnitPrice": 1.65,
+              "Qty": 2000,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "10",
+            "LineNum": 10,
+            "Description": ".",
+            "Amount": 5708.12,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "472",
+                "name": "EJ:Pork belly Skinless 去皮五花 “keken”"
+              },
+              "UnitPrice": 3.19,
+              "Qty": 1789.38,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "11",
+            "LineNum": 11,
+            "Description": "~65 lbs per box",
+            "Amount": 3151.95,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "492",
+                "name": "EJ:Pork Butt Boneless 新鲜猪肩肉 \"IBP or Seaboard\" - FRESH"
+              },
+              "UnitPrice": 1.89,
+              "Qty": 1667.7,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "12",
+            "LineNum": 12,
+            "Amount": 1925.52,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "918",
+                "name": "EJ:Pork Spareribs Medium \"IBP\""
+              },
+              "UnitPrice": 2.09,
+              "Qty": 921.3,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "13",
+            "LineNum": 13,
+            "Amount": 3396.19,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "805",
+                "name": "EJ:Beef Brisket Boneless Choice \"IBP\" 牛胸肉"
+              },
+              "UnitPrice": 4.9,
+              "Qty": 693.1,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "14",
+            "LineNum": 14,
+            "Amount": 1060.55,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1276",
+                "name": "EJ:Pork Belly Skin-on \"Vion\" 带皮五花肉 #34733"
+              },
+              "UnitPrice": 2.95,
+              "Qty": 359.51,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "15",
+            "LineNum": 15,
+            "Amount": 290.38,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1083",
+                "name": "outside skirt steak choice"
+              },
+              "UnitPrice": 8.99,
+              "Qty": 32.3,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "16",
+            "LineNum": 16,
+            "Amount": 1017.42,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "892",
+                "name": "EJ:Boneless Pork Loin \"Smithfield\" #11213 猪里脊"
+              },
+              "UnitPrice": 1.55,
+              "Qty": 656.4,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          }
+        ],
+        "VendorRef": {
+          "value": "67",
+          "name": "EJ foodco"
+        },
+        "APAccountRef": {
+          "value": "48",
+          "name": "Accounts Payable (A/P)"
+        },
+        "TotalAmt": 26986.45
+      },
+      {
+        "DueDate": "2025-07-31",
+        "Balance": 9506.39,
+        "domain": "QBO",
+        "sparse": false,
+        "Id": "80476",
+        "SyncToken": "0",
+        "MetaData": {
+          "CreateTime": "2025-07-31T09:50:32-07:00",
+          "LastModifiedByRef": {
+            "value": "9130357303901646"
+          },
+          "LastUpdatedTime": "2025-07-31T09:50:32-07:00"
+        },
+        "TxnDate": "2025-07-31",
+        "CurrencyRef": {
+          "value": "USD",
+          "name": "United States Dollar"
+        },
+        "Line": [
+          {
+            "Id": "1",
+            "LineNum": 1,
+            "Amount": 3681.19,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "992",
+                "name": "D&T:beef finger meat choice 牛肋条 \"5 STAR/St Helens\""
+              },
+              "UnitPrice": 6.19,
+              "Qty": 594.7,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "2",
+            "LineNum": 2,
+            "Amount": 4129.19,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1160",
+                "name": "D&T:Angus Choice Bone-In Beef Short Rib \"Swift\" #90232"
+              },
+              "UnitPrice": 7.05,
+              "Qty": 585.7,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "3",
+            "LineNum": 3,
+            "Amount": 0,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1292",
+                "name": "D&T:Flat Iron/Top Blade \"5 Star\" Select 牛板踺"
+              },
+              "UnitPrice": 0,
+              "Qty": 404.5,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "4",
+            "LineNum": 4,
+            "Amount": 999.56,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1281",
+                "name": "D&T:Australian Flank Steak \"Coles\" 澳洲扇片牛"
+              },
+              "UnitPrice": 5.55,
+              "Qty": 180.1,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "5",
+            "LineNum": 5,
+            "Description": "~45 lbs per box",
+            "Amount": 0,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "664",
+                "name": "D&T:Baking Hens Top Bee ”hens“ 老母鸡"
+              },
+              "UnitPrice": 0,
+              "Qty": 142.88,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "6",
+            "LineNum": 6,
+            "Amount": 382.5,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1284",
+                "name": "D&T:Fish ball with roe 鱼籽包心丸 好好牌"
+              },
+              "UnitPrice": 127.5,
+              "Qty": 3,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "7",
+            "LineNum": 7,
+            "Amount": 103.2,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1342",
+                "name": "D&T:Green Mussels Medium 12lb 青口"
+              },
+              "UnitPrice": 4.3,
+              "Qty": 24,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "8",
+            "LineNum": 8,
+            "Amount": 120.75,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1343",
+                "name": "D&T:Jumbo Squid Whole 600/800 整条鱿鱼 35 lb"
+              },
+              "UnitPrice": 3.45,
+              "Qty": 35,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          },
+          {
+            "Id": "9",
+            "LineNum": 9,
+            "Amount": 90.0,
+            "LinkedTxn": [],
+            "DetailType": "ItemBasedExpenseLineDetail",
+            "ItemBasedExpenseLineDetail": {
+              "BillableStatus": "NotBillable",
+              "ItemRef": {
+                "value": "1344",
+                "name": "D&T:Baby Octopus 26/40 \"Lion's Head\" 小章鱼 24lb"
+              },
+              "UnitPrice": 3.75,
+              "Qty": 24,
+              "TaxCodeRef": {
+                "value": "NON"
+              }
+            },
+            "CustomExtensions": []
+          }
+        ],
+        "VendorRef": {
+          "value": "383",
+          "name": "D&T Foods"
+        },
+        "APAccountRef": {
+          "value": "48",
+          "name": "Accounts Payable (A/P)"
+        },
+        "TotalAmt": 9506.39
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 3,
+    "totalCount": 3
+  },
+  "time": "2025-07-31T11:04:03.664-07:00"
+}

@@ -37,6 +37,10 @@ Thumbs.db
 .vercel
 
 # Example response files
-example_bill_response.json
-example_bills_response.json
-example_inventory_response.json
+.*example_bill_response.json
+.*example_bills_response.json
+.*example_inventory_response.json
+.*example_inventory_response.jsonl
+.*example_purchase_transactions_response.jsonl
+.*pretty_inventory_response.json
+.*pretty_purchase_transactions_response.json
