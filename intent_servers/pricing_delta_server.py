@@ -33,8 +33,11 @@ class PricingDeltaServer(IIntentServer):
     ) -> 'PricingDeltaServer':
         # Use absolute paths that work in deployed environment
         current_dir = os.getcwd()
-        inventory_save_file_path = os.path.join(current_dir, 'retrievers', 'tests', 'mock_inventory_response.jsonl')
-        purchase_transactions_save_file_path = os.path.join(current_dir, 'retrievers', 'tests', 'mock_purchase_transactions_response.jsonl')
+        # inventory_save_file_path = os.path.join(current_dir, 'retrievers', 'tests', 'mock_inventory_response.jsonl')
+        # purchase_transactions_save_file_path = os.path.join(current_dir, 'retrievers', 'tests', 'mock_purchase_transactions_response.jsonl')
+
+        inventory_save_file_path = None
+        purchase_transactions_save_file_path = None
 
         inventory_server = InventoryServer(
             qb_inventory_retriever=QBInventoryAPIRetriever(
@@ -54,11 +57,15 @@ class PricingDeltaServer(IIntentServer):
             purchase_transactions_server=purchase_transactions_server,
             inventory_server=inventory_server,
             realm_id=realm_id,
-            email_sender = CompanyEmailSender(
-                email_to=email, 
-                subject=f"QuickBooks Pricing Delta Report - {realm_id}", 
-                company_id=realm_id
-            )
+            email_sender = PricingDeltaServer.get_email_sender(realm_id, email)
+        )
+
+    @staticmethod
+    def get_email_sender(realm_id: str, email: str) -> CompanyEmailSender:
+        return CompanyEmailSender(
+            email_to=email, 
+            subject=f"QuickBooks Pricing Markup Report - {datetime.now().strftime('%Y-%m-%d')}", 
+            company_id=realm_id
         )
 
     @staticmethod
@@ -80,11 +87,7 @@ class PricingDeltaServer(IIntentServer):
                 )
             ),
             realm_id=realm_id,
-            email_sender = CompanyEmailSender(
-                email_to=email, 
-                subject=f"QuickBooks Pricing Delta Report - {realm_id}", 
-                company_id=realm_id
-            )
+            email_sender = PricingDeltaServer.get_email_sender(realm_id, email)
         )
 
     def __init__(
