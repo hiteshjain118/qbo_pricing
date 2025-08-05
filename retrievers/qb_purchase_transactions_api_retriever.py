@@ -55,13 +55,14 @@ class QBPurchaseTransactionsAPIRetriever(QBAPIRetriever):
         
         # Log intuit_tid if present in response headers
         intuit_tid = response.headers.get('intuit_tid')
+        num_items = len(response.json()['QueryResponse'].get('Bill', []))
         if intuit_tid:
-            logger.info(f"Bill Transactions API Response - intuit_tid: {intuit_tid}")
+            logger.info(f"Successfully got bill transactions API Response - intuit_tid: {intuit_tid}")
         else:
-            logger.info("Bill Transactions API Response - no intuit_tid found in headers")
+            logger.info("Failed to get bill transactions API Response - no intuit_tid found in headers")
         
         response_json = response.json()
-        return response_json, len(response_json['QueryResponse']['Bill'])
+        return response_json, num_items
 
     def _describe_for_logging(self, responses: List[Dict[str, Any]]) -> str:
         return (

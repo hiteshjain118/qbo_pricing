@@ -32,8 +32,8 @@ class PurchaseTransactionsServer(IIntentServer):
             raise exception if query_response is not a valid json or not in the expected format
         """
         extracted_data = []
-            
-        bills = response['QueryResponse']['Bill']
+        
+        bills = response['QueryResponse'].get('Bill', [])
         
         for bill in bills:
             # Get transaction date

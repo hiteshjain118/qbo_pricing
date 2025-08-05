@@ -336,7 +336,13 @@
                 <div class="status-text">
                     <strong>Report Schedule:</strong>
                     {% if existing_job %}
-                        {{ existing_job.email }} at <span id="displayTime">{{ existing_job.schedule_time }}</span>
+                        {% set emails = existing_job.email.split(',') %}
+                        {% if emails|length == 1 %}
+                            {{ existing_job.email }} at <span id="displayTime">{{ existing_job.schedule_time }}</span>
+                        {% else %}
+                            {{ emails|length }} recipients at <span id="displayTime">{{ existing_job.schedule_time }}</span>
+                            <br><small style="color: #666;">{{ existing_job.email }}</small>
+                        {% endif %}
                         <button type="button" class="btn-link" onclick="editSchedule()">Edit</button>
                     {% else %}
                         Not scheduled
@@ -386,9 +392,13 @@
             
             <form method="POST" action="{{ url_for('configure_job') }}" id="scheduleForm">
                 <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" value="{{ existing_job.email if existing_job else '' }}" 
+                    <label for="email">Email Addresses</label>
+                    <input type="text" id="email" name="email" value="{{ existing_job.email if existing_job else '' }}" 
+                           placeholder="email1@example.com, email2@example.com, email3@example.com"
                            {% if not connected_companies %}disabled{% endif %} required>
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        Enter multiple email addresses separated by commas
+                    </small>
                 </div>
                 
                 <div class="form-group">
@@ -402,7 +412,7 @@
                 </div>
                 
                 <button type="submit" class="btn" id="scheduleBtn" 
-                        {% if not connected_companies or (not existing_job and (not email or not schedule_time)) %}disabled{% endif %}>
+                        {% if not connected_companies or (not email or not schedule_time) %}disabled{% endif %}>
                     {% if existing_job %}
                     Update Schedule
                     {% else %}

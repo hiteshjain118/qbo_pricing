@@ -145,20 +145,25 @@ class TestPricingDeltaServer(unittest.TestCase):
             'purchase_amount': [45.0, 180.0, 300.0],
             'purchase_price': [9.0, 18.0, 20.0]
         })
-        
-        # Mock the servers to return our test data
-        self.mock_inventory_server.serve.return_value = inventory_df
-        self.mock_purchase_transactions_server.serve.return_value = purchase_df
-        
-        result = self.pricing_delta_server.get_pricing_delta()
-        
+
+        result = self.pricing_delta_server.get_pricing_delta(purchase_df, inventory_df)
+
+        # Verify the result
         self.assertIsInstance(result, pd.DataFrame)
-        # Left join should include all purchase transactions (3 total)
-        # Product A and B have matching inventory, Product D doesn't
-        self.assertEqual(len(result), 3)
-        self.assertIn('Product A', result['product_name'].values)
-        self.assertIn('Product B', result['product_name'].values)
-        self.assertIn('Product D', result['product_name'].values)
+        self.assertEqual(len(result), 3)  # All purchase transactions should be included
+        self.assertIn('pricing_delta', result.columns)
+        self.assertIn('pricing_perc_delta', result.columns)
+        self.assertIn('matched', result.columns)
+
+        # Check that matching products have both inventory and purchase data
+        product_a_row = result[result['product_name'] == 'Product A'].iloc[0]
+        self.assertEqual(product_a_row['matched'], 'both')
+        self.assertNotEqual(product_a_row['pricing_delta'], None)
+
+        # Check that non-matching products have only purchase data
+        product_d_row = result[result['product_name'] == 'Product D'].iloc[0]
+        self.assertEqual(product_d_row['matched'], 'left_only')
+        self.assertTrue(pd.isna(product_d_row['inventory_price']))
 
     def test_get_pricing_delta_with_no_matches(self):
         """Test get_pricing_delta with no matching products"""
@@ -173,28 +178,36 @@ class TestPricingDeltaServer(unittest.TestCase):
             'purchase_amount': [45.0, 180.0],
             'purchase_price': [9.0, 18.0]
         })
-        
-        # Mock the servers to return our test data
-        self.mock_inventory_server.serve.return_value = inventory_df
-        self.mock_purchase_transactions_server.serve.return_value = purchase_df
-        
-        result = self.pricing_delta_server.get_pricing_delta()
-        
+
+        result = self.pricing_delta_server.get_pricing_delta(purchase_df, inventory_df)
+
+        # Verify the result
         self.assertIsInstance(result, pd.DataFrame)
-        # Left join should include all purchase transactions (2 total)
-        # Even though no products match, the left join includes all purchase transactions
-        self.assertEqual(len(result), 2)
-        self.assertIn('Product C', result['product_name'].values)
-        self.assertIn('Product D', result['product_name'].values)
+        self.assertEqual(len(result), 2)  # All purchase transactions should be included
+        self.assertIn('pricing_delta', result.columns)
+        self.assertIn('pricing_perc_delta', result.columns)
+        self.assertIn('matched', result.columns)
+
+        # Check that all products have only purchase data (no inventory matches)
+        for _, row in result.iterrows():
+            self.assertEqual(row['matched'], 'left_only')
+            self.assertTrue(pd.isna(row['inventory_price']))
 
     def test_get_pricing_delta_with_empty_dataframes(self):
         """Test get_pricing_delta with empty DataFrames"""
-        # Mock the servers to return empty DataFrames
-        self.mock_inventory_server.serve.return_value = pd.DataFrame()
-        self.mock_purchase_transactions_server.serve.return_value = pd.DataFrame()
+        # Create empty DataFrames with the required columns and proper dtypes
+        empty_purchase_df = pd.DataFrame(columns=['product_name', 'purchase_price']).astype({
+            'product_name': 'object',
+            'purchase_price': 'float64'
+        })
+        empty_inventory_df = pd.DataFrame(columns=['product_name', 'inventory_price']).astype({
+            'product_name': 'object',
+            'inventory_price': 'float64'
+        })
         
-        result = self.pricing_delta_server.get_pricing_delta()
+        result = self.pricing_delta_server.get_pricing_delta(empty_purchase_df, empty_inventory_df)
         
+        # Verify the result
         self.assertIsInstance(result, pd.DataFrame)
         self.assertTrue(result.empty)
 
@@ -241,8 +254,13 @@ class TestPricingDeltaServer(unittest.TestCase):
             'pricing_perc_delta': [11.11, 11.11],
             'matched': ['both', 'left_only']  # Add the matched column
         })
-    
-        result = self.pricing_delta_server._describe_for_logging(test_df)
+        
+        purchase_df = pd.DataFrame({'product_name': ['Product A', 'Product B']})
+        inventory_df = pd.DataFrame({'product_name': ['Product A']})
+        
+        result = self.pricing_delta_server._describe_for_logging(test_df, purchase_df, inventory_df)
+        
+        # Verify the result contains expected information
         self.assertIn("Pricing delta total rows: 2", result)
         self.assertIn("w/ nan inventory price: 1", result)
         self.assertIn("products with nan inventory price: ['Product B']", result)
@@ -250,11 +268,15 @@ class TestPricingDeltaServer(unittest.TestCase):
     def test_describe_for_logging_empty_dataframe(self):
         """Test the _describe_for_logging method with empty DataFrame"""
         empty_df = pd.DataFrame()
-    
-        result = self.pricing_delta_server._describe_for_logging(empty_df)
-    
-        self.assertIsInstance(result, str)
-        self.assertIn('Pricing delta total rows: 0', result)
+        purchase_df = pd.DataFrame()
+        inventory_df = pd.DataFrame()
+        
+        result = self.pricing_delta_server._describe_for_logging(empty_df, purchase_df, inventory_df)
+        
+        # Verify the result contains expected information for empty DataFrame
+        self.assertIn("Pricing delta total rows: 0", result)
+        self.assertIn("w/ nan inventory price: 0", result)
+        self.assertIn("products with nan inventory price: []", result)
 
     def test_serve_with_valid_responses(self):
         """Test serve method with valid responses using mock file data"""
@@ -285,12 +307,30 @@ class TestPricingDeltaServer(unittest.TestCase):
 
     def test_serve_with_empty_responses(self):
         """Test serve method with empty responses"""
-        self.mock_inventory_retriever.retrieve.return_value = []
-        self.mock_purchase_transactions_retriever.retrieve.return_value = []
+        # Mock empty server responses
+        self.mock_purchase_transactions_server.serve.return_value = pd.DataFrame()
+        self.mock_inventory_server.serve.return_value = pd.DataFrame()
         
+        # Create email sender with multiple emails
+        mock_email_sender = Mock()
+        self.pricing_delta_server.email_sender = mock_email_sender
+        
+        # Call serve method
         result = self.pricing_delta_server.serve()
         
-        self.assertIsInstance(result, bool)
+        # Verify the result
+        self.assertTrue(result)
+        
+        # Verify that email sender was called
+        mock_email_sender.send_email.assert_called_once()
+        
+        # Verify the call arguments
+        call_args = mock_email_sender.send_email.call_args
+        html_arg, excel_arg = call_args[0]
+        
+        # Verify HTML contains empty message
+        self.assertIn("No purchase transactions found", html_arg)
+        self.assertEqual(excel_arg, "")
 
     def test_serve_with_retriever_exception(self):
         """Test serve method when retriever raises an exception"""
@@ -349,6 +389,124 @@ class TestPricingDeltaServer(unittest.TestCase):
         
         self.assertIsInstance(result, bool)
         self.mock_email_sender.send_email.assert_called_once()
+
+    def test_get_email_sender_single_email(self):
+        """Test get_email_sender with single email address"""
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test@example.com")
+        
+        self.assertIsNotNone(email_sender)
+        self.assertEqual(email_sender.email_to, "test@example.com")
+        self.assertEqual(email_sender.company_id, "test_realm")
+        self.assertIn("QuickBooks Pricing Markup Report", email_sender.subject)
+
+    def test_get_email_sender_multiple_emails(self):
+        """Test get_email_sender with multiple comma-separated email addresses"""
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test1@example.com, test2@example.com, test3@example.com")
+        
+        self.assertIsNotNone(email_sender)
+        self.assertEqual(email_sender.email_to, "test1@example.com, test2@example.com, test3@example.com")
+        self.assertEqual(email_sender.company_id, "test_realm")
+        self.assertIn("QuickBooks Pricing Markup Report", email_sender.subject)
+
+    def test_get_email_sender_with_whitespace(self):
+        """Test get_email_sender with email addresses containing whitespace"""
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "  test1@example.com  ,  test2@example.com  ")
+        
+        self.assertIsNotNone(email_sender)
+        self.assertEqual(email_sender.email_to, "  test1@example.com  ,  test2@example.com  ")
+        self.assertEqual(email_sender.company_id, "test_realm")
+
+    def test_serve_with_multiple_emails(self):
+        """Test serve method with multiple email addresses"""
+        # Mock the server responses
+        mock_purchase_df = pd.DataFrame({
+            'product_name': ['Product A', 'Product B'],
+            'purchase_price': [10.0, 20.0],
+            'purchase_quantity': [1, 2],
+            'purchase_amount': [10.0, 40.0],
+            'purchase_transaction_date': ['2025-01-01', '2025-01-02']
+        })
+        
+        mock_inventory_df = pd.DataFrame({
+            'product_name': ['Product A', 'Product B'],
+            'inventory_price': [15.0, 25.0]
+        })
+        
+        self.mock_purchase_transactions_server.serve.return_value = mock_purchase_df
+        self.mock_inventory_server.serve.return_value = mock_inventory_df
+        
+        # Create email sender with multiple emails
+        mock_email_sender = Mock()
+        self.pricing_delta_server.email_sender = mock_email_sender
+        
+        # Call serve method
+        result = self.pricing_delta_server.serve()
+        
+        # Verify the result
+        self.assertTrue(result)
+        
+        # Verify that email sender was called
+        mock_email_sender.send_email.assert_called_once()
+        
+        # Verify the call arguments
+        call_args = mock_email_sender.send_email.call_args
+        html_arg, excel_arg = call_args[0]
+        
+        # Verify HTML contains expected content
+        self.assertIn("Product Name", html_arg)
+        self.assertIn("Purchase Price", html_arg)
+        self.assertIn("Inventory Price", html_arg)
+        self.assertIn("Markup", html_arg)
+        
+        # Verify Excel data is not empty
+        self.assertNotEqual(excel_arg, "")
+
+    def test_format_pricing_delta_to_html_with_matched_column(self):
+        """Test format_pricing_delta_to_html handles the matched column correctly"""
+        pricing_delta_df = pd.DataFrame({
+            'product_name': ['Product A', 'Product B'],
+            'purchase_price': [10.0, 20.0],
+            'inventory_price': [15.0, 25.0],
+            'pricing_delta': [5.0, 5.0],
+            'pricing_perc_delta': [50.0, 25.0],
+            'purchase_transaction_date': ['2025-01-01', '2025-01-02'],
+            'purchase_quantity': [1, 2],
+            'purchase_amount': [10.0, 40.0],
+            'matched': ['both', 'both']
+        })
+        
+        html, excel_data = self.pricing_delta_server.format_pricing_delta_to_html(pricing_delta_df)
+        
+        # Verify HTML contains expected columns
+        self.assertIn("Product Name", html)
+        self.assertIn("Purchase Price", html)
+        self.assertIn("Inventory Price", html)
+        self.assertIn("Markup (Inventory - Purchase)", html)
+        self.assertIn("Markup % (Inventory - Purchase)/Purchase", html)
+        
+        # Verify Excel data is not empty
+        self.assertNotEqual(excel_data, "")
+
+    def test_describe_for_logging_with_matched_column(self):
+        """Test _describe_for_logging handles the matched column correctly"""
+        pricing_delta_df = pd.DataFrame({
+            'product_name': ['Product A', 'Product B', 'Product C'],
+            'purchase_price': [10.0, 20.0, 30.0],
+            'inventory_price': [15.0, 25.0, None],
+            'pricing_delta': [5.0, 5.0, None],
+            'pricing_perc_delta': [50.0, 25.0, None],
+            'matched': ['both', 'both', 'left_only']
+        })
+        
+        purchase_df = pd.DataFrame({'product_name': ['Product A', 'Product B', 'Product C']})
+        inventory_df = pd.DataFrame({'product_name': ['Product A', 'Product B']})
+        
+        description = self.pricing_delta_server._describe_for_logging(pricing_delta_df, purchase_df, inventory_df)
+        
+        # Verify the description contains expected information
+        self.assertIn("Pricing delta total rows: 3", description)
+        self.assertIn("w/ nan inventory price: 1", description)
+        self.assertIn("products with nan inventory price: ['Product C']", description)
 
 
 if __name__ == '__main__':

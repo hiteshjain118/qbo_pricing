@@ -44,7 +44,8 @@ class QBInventoryAPIRetriever(QBAPIRetriever):
         response.raise_for_status()
 
         response_json = response.json()
-        return response_json, len(response_json['QueryResponse']['Item'])
+        num_items = len(response_json['QueryResponse']['Item'])
+        return response_json, num_items
 
     def _describe_for_logging(self, responses: List[Dict[str, Any]]) -> str:
         return (

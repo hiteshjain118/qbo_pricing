@@ -105,23 +105,42 @@ class PricingDeltaServer(IIntentServer):
     def serve(self) -> bool:
         """Generate balance sheet report and send via email"""
         
-        print(f"Generating report for company {self.realm_id}")
+        logger.info(f"Generating report for company {self.realm_id}")
         
-        # Get pricing delta data
-        pricing_delta = self.get_pricing_delta()
-        html_table, excel_data = self.format_pricing_delta_to_html(pricing_delta)
-    
-        # Send email
-        self.email_sender.send_email(html_table, excel_data)
+        try:
+            # Get pricing delta data
+            purchase_transactions_df = self.purchase_transactions_server.serve()
+            inventory_pricing_df = self.inventory_server.serve()
+            pricing_delta_df = pd.DataFrame()
+            
+            # Handle empty DataFrames
+            if purchase_transactions_df.empty:
+                html = self.get_empty_table_html("No purchase transactions found")
+                excel_data = ""
+            elif inventory_pricing_df.empty:
+                html = self.get_empty_table_html("No inventory pricing found")
+                excel_data = ""
+            else:
+                pricing_delta_df = self.get_pricing_delta(purchase_transactions_df, inventory_pricing_df)
+                html, excel_data = self.format_pricing_delta_to_html(pricing_delta_df)
+            
+            logger.info(self._describe_for_logging(pricing_delta_df, purchase_transactions_df, inventory_pricing_df))
+        
+            # Send email
+            self.email_sender.send_email(html, excel_data)
+        
+        except Exception as e:
+            logger.error(f"Error generating report: {e}")
+            traceback.print_exc()
+            raise e
+        
         return True
 
-    def get_pricing_delta(self) -> pd.DataFrame:
-        purchase_transactions_df = self.purchase_transactions_server.serve()
-        inventory_pricing_df = self.inventory_server.serve()
-        
-        # Handle empty DataFrames
-        if purchase_transactions_df.empty or inventory_pricing_df.empty:
-            return pd.DataFrame()
+    def get_pricing_delta(
+        self, 
+        purchase_transactions_df: pd.DataFrame, 
+        inventory_pricing_df: pd.DataFrame
+    ) -> pd.DataFrame:
         
         # Merge the two dataframes on the product_name column
         merged_df = pd.merge(
@@ -138,7 +157,6 @@ class PricingDeltaServer(IIntentServer):
         merged_df['pricing_perc_delta'] = round(
             merged_df['pricing_delta'] / merged_df['purchase_price'] * 100, 2
         )
-        logger.info(self._describe_for_logging(merged_df))
 
         return merged_df
     
@@ -186,9 +204,21 @@ class PricingDeltaServer(IIntentServer):
         
         return html_table, excel_data
 
-    def _describe_for_logging(self, pricing_delta: pd.DataFrame) -> str:
+    def get_empty_table_html(self, message: str) -> str:
+        return f"<p>{message}</p>"
+    
+    def _describe_for_logging(
+        self, 
+        pricing_delta: pd.DataFrame, 
+        purchase_transactions_df: pd.DataFrame, 
+        inventory_pricing_df: pd.DataFrame
+    ) -> str:
         if pricing_delta.empty:
-            return "Pricing delta total rows: 0 w/ nan inventory price: 0 products with nan inventory price: []"
+            return (
+                f"Pricing delta total rows: 0 w/ nan inventory price: 0 products with nan inventory price: []"
+                f"purchase transactions total rows: {len(purchase_transactions_df)}"
+                f"inventory pricing total rows: {len(inventory_pricing_df)}"
+            )
         
         return (
             f"Pricing delta total rows: {len(pricing_delta)} "

@@ -59,7 +59,7 @@ class QBOJob(Base):
     
     id = Column(Integer, primary_key=True)
     realm_id = Column(String(50), nullable=False)
-    email = Column(String(255), nullable=False)
+    email = Column(String(1000), nullable=False)  # Comma-separated list of email addresses
     schedule_time = Column(String(20), nullable=False)
     next_run = Column(DateTime, nullable=True)
     last_run = Column(DateTime, nullable=True)

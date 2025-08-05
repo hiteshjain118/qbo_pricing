@@ -75,6 +75,16 @@ def configure_job():
         flash('Please fill in all fields.', 'error')
         return redirect(url_for('index'))
     
+    # Validate email addresses
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    email_list = [email.strip() for email in email.split(',') if email.strip()]
+    
+    for email_addr in email_list:
+        if not re.match(email_pattern, email_addr):
+            flash(f'Invalid email address: {email_addr}', 'error')
+            return redirect(url_for('index'))
+    
     # Get the first connected company if realm_id not provided
     if not realm_id:
         connected_companies = auth_manager.get_companies()
@@ -110,7 +120,9 @@ def configure_job():
         
         logger.info(f"Converting schedule time from {user_timezone}: {schedule_time} -> UTC: {utc_schedule_time}")
         
-        report_manager.store_job_config(realm_id, email, utc_schedule_time)
+        # Store comma-separated email list
+        email_string = ', '.join(email_list)
+        report_manager.store_job_config(realm_id, email_string, utc_schedule_time)
         flash('Job scheduled successfully!', 'success')
         
     except Exception as e:

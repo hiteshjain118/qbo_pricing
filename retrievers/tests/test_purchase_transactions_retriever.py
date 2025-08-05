@@ -103,6 +103,83 @@ class TestQBPurchaseTransactionsAPIRetriever(unittest.TestCase):
             
             self.assertIn("No valid access token for company test_realm_id", str(context.exception))
 
+    def test_call_api_once_missing_query_response(self):
+        """Test _call_api_once when QueryResponse key is missing"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"SomeOtherKey": {"Bill": []}}
+        mock_response.raise_for_status.return_value = None
+    
+        with patch('requests.get', return_value=mock_response):
+            with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
+                with self.assertRaises(KeyError):
+                    self.retriever._call_api_once()
+
+    def test_call_api_once_missing_bill_key(self):
+        """Test _call_api_once when Bill key is missing from QueryResponse"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"QueryResponse": {"SomeOtherKey": []}}
+        mock_response.raise_for_status.return_value = None
+    
+        with patch('requests.get', return_value=mock_response):
+            with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
+                response_dict, num_items = self.retriever._call_api_once()
+    
+                self.assertIsInstance(response_dict, dict)
+                self.assertEqual(num_items, 0)  # Should return 0 when Bill key is missing
+                self.assertIn('QueryResponse', response_dict)
+
+    def test_call_api_once_empty_bill_list(self):
+        """Test _call_api_once when Bill list is empty"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"QueryResponse": {"Bill": []}}
+        mock_response.raise_for_status.return_value = None
+    
+        with patch('requests.get', return_value=mock_response):
+            with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
+                response_dict, num_items = self.retriever._call_api_once()
+    
+                self.assertIsInstance(response_dict, dict)
+                self.assertEqual(num_items, 0)
+                self.assertIn('QueryResponse', response_dict)
+                self.assertIn('Bill', response_dict['QueryResponse'])
+                self.assertEqual(len(response_dict['QueryResponse']['Bill']), 0)
+
+    def test_call_api_once_bill_key_is_none(self):
+        """Test _call_api_once when Bill key is None"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"QueryResponse": {"Bill": None}}
+        mock_response.raise_for_status.return_value = None
+    
+        with patch('requests.get', return_value=mock_response):
+            with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
+                with self.assertRaises(TypeError):
+                    self.retriever._call_api_once()
+
+    def test_call_api_once_malformed_response(self):
+        """Test _call_api_once with malformed response"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"QueryResponse": None}
+        mock_response.raise_for_status.return_value = None
+    
+        with patch('requests.get', return_value=mock_response):
+            with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
+                with self.assertRaises(AttributeError):
+                    self.retriever._call_api_once()
+
+    def test_call_api_once_bill_key_not_present(self):
+        """Test _call_api_once when Bill key is not present in QueryResponse"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"QueryResponse": {}}  # Empty QueryResponse
+        mock_response.raise_for_status.return_value = None
+    
+        with patch('requests.get', return_value=mock_response):
+            with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
+                response_dict, num_items = self.retriever._call_api_once()
+    
+                self.assertIsInstance(response_dict, dict)
+                self.assertEqual(num_items, 0)  # Should return 0 when Bill key is not present
+                self.assertIn('QueryResponse', response_dict)
+
 
 if __name__ == '__main__':
     unittest.main() 

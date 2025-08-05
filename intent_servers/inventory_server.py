@@ -25,7 +25,7 @@ class InventoryServer(IIntentServer):
     
     def _extract_cols(self, response: Dict[str, Any]) -> pd.DataFrame:
         inventory_data = []
-        for item_data in response['QueryResponse']['Item']:     
+        for item_data in response['QueryResponse'].get('Item', []):     
             inventory_info = {
                 'product_name': item_data.get('FullyQualifiedName', 'N/A'),
                 'inventory_price': item_data.get('UnitPrice', 0.0),
