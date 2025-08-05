@@ -12,7 +12,7 @@ import pandas as pd
 from datetime import datetime
 
 # Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from retrievers.qb_purchase_transactions_api_retriever import QBPurchaseTransactionsAPIRetriever
 from qbo_request_auth_params import QBORequestAuthParams

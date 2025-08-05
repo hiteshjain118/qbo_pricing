@@ -392,7 +392,9 @@ class TestPricingDeltaServer(unittest.TestCase):
 
     def test_get_email_sender_single_email(self):
         """Test get_email_sender with single email address"""
-        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test@example.com")
+        from datetime import datetime
+        report_dt = datetime.now()
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test@example.com", report_dt)
         
         self.assertIsNotNone(email_sender)
         self.assertEqual(email_sender.email_to, "test@example.com")
@@ -401,7 +403,9 @@ class TestPricingDeltaServer(unittest.TestCase):
 
     def test_get_email_sender_multiple_emails(self):
         """Test get_email_sender with multiple comma-separated email addresses"""
-        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test1@example.com, test2@example.com, test3@example.com")
+        from datetime import datetime
+        report_dt = datetime.now()
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test1@example.com, test2@example.com, test3@example.com", report_dt)
         
         self.assertIsNotNone(email_sender)
         self.assertEqual(email_sender.email_to, "test1@example.com, test2@example.com, test3@example.com")
@@ -410,7 +414,9 @@ class TestPricingDeltaServer(unittest.TestCase):
 
     def test_get_email_sender_with_whitespace(self):
         """Test get_email_sender with email addresses containing whitespace"""
-        email_sender = PricingDeltaServer.get_email_sender("test_realm", "  test1@example.com  ,  test2@example.com  ")
+        from datetime import datetime
+        report_dt = datetime.now()
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "  test1@example.com  ,  test2@example.com  ", report_dt)
         
         self.assertIsNotNone(email_sender)
         self.assertEqual(email_sender.email_to, "  test1@example.com  ,  test2@example.com  ")
@@ -507,6 +513,123 @@ class TestPricingDeltaServer(unittest.TestCase):
         self.assertIn("Pricing delta total rows: 3", description)
         self.assertIn("w/ nan inventory price: 1", description)
         self.assertIn("products with nan inventory price: ['Product C']", description)
+
+    def test_init_with_api_retrievers_with_report_date(self):
+        """Test init_with_api_retrievers with specific report date"""
+        from datetime import datetime
+        mock_auth_params = Mock()
+        report_dt = datetime(2025, 1, 15)
+        
+        server = PricingDeltaServer.init_with_api_retrievers(
+            auth_params=mock_auth_params,
+            realm_id="test_realm",
+            email="test@example.com",
+            report_dt=report_dt
+        )
+        
+        self.assertIsInstance(server, PricingDeltaServer)
+        self.assertIsNotNone(server.inventory_server)
+        self.assertIsNotNone(server.purchase_transactions_server)
+        self.assertIsNotNone(server.email_sender)
+        self.assertEqual(server.realm_id, "test_realm")
+        
+        # Verify the email sender has the correct report date in subject
+        self.assertIn("2025-01-15", server.email_sender.subject)
+
+    def test_init_with_file_retrievers_with_report_date(self):
+        """Test init_with_file_retrievers with specific report date"""
+        from datetime import datetime
+        report_dt = datetime(2025, 1, 20)
+        
+        server = PricingDeltaServer.init_with_file_retrievers(
+            inventory_file_path="test_inventory.jsonl",
+            purchase_transactions_file_path="test_purchase.jsonl",
+            realm_id="test_realm",
+            email="test@example.com",
+            report_dt=report_dt
+        )
+        
+        self.assertIsInstance(server, PricingDeltaServer)
+        self.assertIsInstance(server.inventory_server.qb_inventory_retriever, QBFileRetriever)
+        self.assertIsInstance(server.purchase_transactions_server.qb_purchase_transactions_retriever, QBFileRetriever)
+        self.assertIsNotNone(server.email_sender)
+        self.assertEqual(server.realm_id, "test_realm")
+        
+        # Verify the email sender has the correct report date in subject
+        self.assertIn("2025-01-20", server.email_sender.subject)
+
+    def test_get_email_sender_with_specific_date(self):
+        """Test get_email_sender with a specific report date"""
+        from datetime import datetime
+        report_dt = datetime(2025, 2, 10)
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test@example.com", report_dt)
+        
+        self.assertIsNotNone(email_sender)
+        self.assertEqual(email_sender.email_to, "test@example.com")
+        self.assertEqual(email_sender.company_id, "test_realm")
+        self.assertIn("QuickBooks Pricing Markup Report", email_sender.subject)
+        self.assertIn("2025-02-10", email_sender.subject)
+
+    def test_serve_with_report_date_parameter(self):
+        """Test serve method with report date parameter"""
+        # Mock the server responses
+        mock_purchase_df = pd.DataFrame({
+            'product_name': ['Product A', 'Product B'],
+            'purchase_price': [10.0, 20.0],
+            'purchase_quantity': [1, 2],
+            'purchase_amount': [10.0, 40.0],
+            'purchase_transaction_date': ['2025-01-01', '2025-01-02']
+        })
+        
+        mock_inventory_df = pd.DataFrame({
+            'product_name': ['Product A', 'Product B'],
+            'inventory_price': [15.0, 25.0]
+        })
+        
+        self.mock_purchase_transactions_server.serve.return_value = mock_purchase_df
+        self.mock_inventory_server.serve.return_value = mock_inventory_df
+        
+        # Create email sender with multiple emails
+        mock_email_sender = Mock()
+        self.pricing_delta_server.email_sender = mock_email_sender
+        
+        # Call serve method
+        result = self.pricing_delta_server.serve()
+        
+        # Verify the result
+        self.assertTrue(result)
+        
+        # Verify that email sender was called
+        mock_email_sender.send_email.assert_called_once()
+        
+        # Verify the call arguments
+        call_args = mock_email_sender.send_email.call_args
+        html_arg, excel_arg = call_args[0]
+        
+        # Verify HTML contains expected content
+        self.assertIn("Product Name", html_arg)
+        self.assertIn("Purchase Price", html_arg)
+        self.assertIn("Inventory Price", html_arg)
+        self.assertIn("Markup", html_arg)
+        
+        # Verify Excel data is not empty
+        self.assertNotEqual(excel_arg, "")
+
+    def test_report_date_validation(self):
+        """Test that report date is properly validated and formatted"""
+        from datetime import datetime
+        
+        # Test with valid date
+        report_dt = datetime(2025, 3, 15)
+        email_sender = PricingDeltaServer.get_email_sender("test_realm", "test@example.com", report_dt)
+        
+        self.assertIn("2025-03-15", email_sender.subject)
+        
+        # Test with different date
+        report_dt2 = datetime(2024, 12, 31)
+        email_sender2 = PricingDeltaServer.get_email_sender("test_realm", "test@example.com", report_dt2)
+        
+        self.assertIn("2024-12-31", email_sender2.subject)
 
 
 if __name__ == '__main__':

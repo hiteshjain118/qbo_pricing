@@ -38,9 +38,9 @@ class TestInventoryServer(unittest.TestCase):
         """Test extracting columns from valid inventory response using mock file data"""
         # The mock data is already parsed as a dictionary, pass it directly
         mock_response = self.mock_inventory_data
-    
+        
         result = self.inventory_server._extract_cols(mock_response)
-    
+        
         self.assertIsInstance(result, pd.DataFrame)
         # The mock data contains multiple items, so we should have multiple rows
         self.assertGreater(len(result), 0)
@@ -86,7 +86,7 @@ class TestInventoryServer(unittest.TestCase):
                 ]
             }
         }
-    
+        
         result = self.inventory_server._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)
@@ -133,7 +133,7 @@ class TestInventoryServer(unittest.TestCase):
         """Test serve method with valid responses"""
         # Mock the retriever to return our mock data as dictionaries
         self.mock_retriever.retrieve.return_value = [self.mock_inventory_data]
-    
+        
         result = self.inventory_server.serve()
         
         self.assertIsInstance(result, pd.DataFrame)
@@ -162,7 +162,7 @@ class TestInventoryServer(unittest.TestCase):
     def test_serve_with_invalid_response_format(self):
         """Test serve method with invalid response format"""
         self.mock_retriever.retrieve.return_value = ["invalid json"]
-    
+        
         with self.assertRaises(TypeError):
             self.inventory_server.serve()
 

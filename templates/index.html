@@ -421,8 +421,15 @@
                 </button>
                 
                 {% if existing_job %}
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="report_date">Report Date</label>
+                    <input type="date" id="report_date" name="report_date" 
+                           value="{{ today_date }}" 
+                           {% if not connected_companies %}disabled{% endif %} required>
+                </div>
+                
                 <button type="button" class="btn btn-secondary" id="runJobBtn" onclick="runJobNow()">
-                    🚀 Run Report Now
+                    🚀 Run Adhoc Report
                 </button>
                 {% endif %}
             </form>
@@ -563,6 +570,7 @@
             // Add current email and schedule time
             const emailInput = document.getElementById('email');
             const timeInput = document.getElementById('schedule_time');
+            const reportDateInput = document.getElementById('report_date');
             
             const emailField = document.createElement('input');
             emailField.type = 'hidden';
@@ -575,6 +583,12 @@
             timeField.name = 'schedule_time';
             timeField.value = timeInput.value;
             form.appendChild(timeField);
+            
+            const reportDateField = document.createElement('input');
+            reportDateField.type = 'hidden';
+            reportDateField.name = 'report_date';
+            reportDateField.value = reportDateInput.value;
+            form.appendChild(reportDateField);
             
             document.body.appendChild(form);
             form.submit();

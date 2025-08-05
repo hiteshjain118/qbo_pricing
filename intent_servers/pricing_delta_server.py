@@ -8,6 +8,10 @@ from pretty_html_table import build_table
 import io
 import base64
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from intent_servers.i_intent_server import IIntentServer
 from intent_servers.inventory_server import InventoryServer
 from intent_servers.purchase_transactions_server import PurchaseTransactionsServer
@@ -30,6 +34,7 @@ class PricingDeltaServer(IIntentServer):
         auth_params: QBORequestAuthParams, 
         realm_id: str, 
         email: str,
+        report_dt: datetime = datetime.now()
     ) -> 'PricingDeltaServer':
         # Use absolute paths that work in deployed environment
         current_dir = os.getcwd()
@@ -50,21 +55,21 @@ class PricingDeltaServer(IIntentServer):
             qb_purchase_transactions_retriever=QBPurchaseTransactionsAPIRetriever(
                 auth_params=auth_params,
                 realm_id=realm_id,
-                report_dt=datetime.now(),
+                report_dt=report_dt,
                 save_file_path=purchase_transactions_save_file_path
             ))
         return PricingDeltaServer(
             purchase_transactions_server=purchase_transactions_server,
             inventory_server=inventory_server,
             realm_id=realm_id,
-            email_sender = PricingDeltaServer.get_email_sender(realm_id, email)
+            email_sender = PricingDeltaServer.get_email_sender(realm_id, email, report_dt)
         )
 
     @staticmethod
-    def get_email_sender(realm_id: str, email: str) -> CompanyEmailSender:
+    def get_email_sender(realm_id: str, email: str, report_dt: datetime) -> CompanyEmailSender:
         return CompanyEmailSender(
             email_to=email, 
-            subject=f"QuickBooks Pricing Markup Report - {datetime.now().strftime('%Y-%m-%d')}", 
+            subject=f"QuickBooks Pricing Markup Report for {report_dt.strftime('%Y-%m-%d')} transactions", 
             company_id=realm_id
         )
 
@@ -73,7 +78,8 @@ class PricingDeltaServer(IIntentServer):
         inventory_file_path: str,
         purchase_transactions_file_path: str,
         realm_id: str,
-        email: str
+        email: str,
+        report_dt: datetime = datetime.now()
     ) -> 'PricingDeltaServer':
         return PricingDeltaServer(
             purchase_transactions_server=PurchaseTransactionsServer(
@@ -87,7 +93,7 @@ class PricingDeltaServer(IIntentServer):
                 )
             ),
             realm_id=realm_id,
-            email_sender = PricingDeltaServer.get_email_sender(realm_id, email)
+            email_sender = PricingDeltaServer.get_email_sender(realm_id, email, report_dt)
         )
 
     def __init__(
@@ -112,7 +118,7 @@ class PricingDeltaServer(IIntentServer):
             purchase_transactions_df = self.purchase_transactions_server.serve()
             inventory_pricing_df = self.inventory_server.serve()
             pricing_delta_df = pd.DataFrame()
-            
+
             # Handle empty DataFrames
             if purchase_transactions_df.empty:
                 html = self.get_empty_table_html("No purchase transactions found")
@@ -196,6 +202,10 @@ class PricingDeltaServer(IIntentServer):
         # excel attachment will have all columns in the specified order
         html_table = build_table(pricing_delta[email_columns], 'blue_light')
         
+        #html to be added to the email contains the transaction date and then the table
+        transaction_date_html = f"<p>This report computes price markup between {pricing_delta['Purchase Date'].iloc[0]} bill transactions and current inventory prices.</p>"
+        html_table = transaction_date_html + html_table
+
         # Create Excel data in memory and encode as base64
         excel_buffer = io.BytesIO()
         pricing_delta_excel.to_excel(excel_buffer, index=False)

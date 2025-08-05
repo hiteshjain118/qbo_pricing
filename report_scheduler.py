@@ -133,21 +133,22 @@ class QBOReportScheduler:
             self.generate_and_send_report_for_realm(realm_id, email)
             
     
-    def generate_and_send_report_for_realm(self, realm_id: str, email: str) -> bool:
+    def generate_and_send_report_for_realm(self, realm_id: str, email: str, report_date: str = None) -> bool:
         """Generate and send report for immediate execution"""
         print(f"Generating report for company {realm_id}")
         
-        # success = BalanceSheetServer(self.auth_manager.params, realm_id).generate_and_send_report(email)
-        # success = PricingDeltaServer.init_with_file_retrievers(
-        #     inventory_file_path=QBFileRetriever.INVENTORY_FILE_PATH,
-        #     purchase_transactions_file_path=QBFileRetriever.PURCHASE_TRANSACTIONS_FILE_PATH,
-        #     realm_id=realm_id,
-        #     email=email
-        # ).serve()
+        # Parse report_date if provided, otherwise use current date
+        from datetime import datetime
+        if report_date:
+            report_dt = datetime.strptime(report_date, '%Y-%m-%d')
+        else:
+            report_dt = datetime.now()
+        
         success = PricingDeltaServer.init_with_api_retrievers(
             auth_params=self.auth_manager.params, 
             realm_id=realm_id, 
             email=email,
+            report_dt=report_dt
         ).serve()
         if success:
             self.update_job_run(realm_id)

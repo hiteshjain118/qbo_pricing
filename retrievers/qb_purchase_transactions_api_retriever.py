@@ -42,7 +42,7 @@ class QBPurchaseTransactionsAPIRetriever(QBAPIRetriever):
         
         # Query for bills within the date range
         query = (
-            f"SELECT * FROM Bill WHERE TxnDate >= '{self.report_date}' "
+            f"SELECT * FROM Bill WHERE TxnDate >= '{self.report_date}' and TxnDate <= '{self.report_date}' "
         )
         
         params = {

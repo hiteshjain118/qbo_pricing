@@ -29,18 +29,30 @@ report_manager = QBOReportScheduler(auth_params)
 
 @app.route('/')
 def index():
-    """Main page - show connection status and next steps"""
-    connected_companies = auth_manager.get_companies()
-    existing_job = None
-    
-    if connected_companies:
-        # Check if there's an existing job for the first company
-        realm_id = connected_companies[0]['realm_id']
-        existing_job = report_manager.get_job_for_realm(realm_id)
-    
-    return render_template('index.html', 
-                         connected_companies=connected_companies,
-                         existing_job=existing_job)
+    """Main page"""
+    try:
+        # Get connected companies
+        connected_companies = auth_manager.get_companies()
+        
+        # Get existing job if any
+        existing_job = None
+        if connected_companies:
+            existing_job = report_manager.get_job_for_realm(connected_companies[0]['realm_id'])
+        
+        # Get today's date in YYYY-MM-DD format for the date input default
+        from datetime import datetime
+        today_date = datetime.now().strftime('%Y-%m-%d')
+        
+        return render_template('index.html', 
+                             connected_companies=connected_companies,
+                             existing_job=existing_job,
+                             today_date=today_date)
+    except Exception as e:
+        flash(f'Error loading page: {str(e)}', 'error')
+        return render_template('index.html', 
+                             connected_companies=[],
+                             existing_job=None,
+                             today_date=datetime.now().strftime('%Y-%m-%d'))
 
 @app.route('/connect', methods=['POST'])
 def connect_quickbooks():
@@ -153,6 +165,7 @@ def run_job_now():
     """Run a job immediately"""
     email = request.form.get('email')
     schedule_time = request.form.get('schedule_time')
+    report_date = request.form.get('report_date')
     
     if not email:
         flash('Email is required for running job.', 'error')
@@ -173,7 +186,7 @@ def run_job_now():
     
     try:
         # Generate and send report immediately
-        success = report_manager.generate_and_send_report_for_realm(realm_id, email)
+        success = report_manager.generate_and_send_report_for_realm(realm_id, email, report_date)
         
         if success:
             flash('✅ Report generated and sent successfully!', 'success')

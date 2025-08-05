@@ -38,9 +38,9 @@ class TestPurchaseTransactionsServer(unittest.TestCase):
         """Test extracting columns from valid purchase transactions response using mock file data"""
         # The mock data is already parsed as a dictionary, pass it directly
         mock_response = self.mock_purchase_transactions_data
-    
+        
         result = self.purchase_transactions_server._extract_cols(mock_response)
-    
+        
         self.assertIsInstance(result, pd.DataFrame)
         # The mock data contains multiple transactions, so we should have multiple rows
         self.assertGreater(len(result), 0)
@@ -89,7 +89,7 @@ class TestPurchaseTransactionsServer(unittest.TestCase):
                 ]
             }
         }
-    
+        
         result = self.purchase_transactions_server._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)
@@ -117,7 +117,7 @@ class TestPurchaseTransactionsServer(unittest.TestCase):
                 ]
             }
         }
-    
+        
         result = self.purchase_transactions_server._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)
@@ -131,7 +131,7 @@ class TestPurchaseTransactionsServer(unittest.TestCase):
                 "Bill": []
             }
         }
-    
+        
         result = self.purchase_transactions_server._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)
@@ -175,7 +175,7 @@ class TestPurchaseTransactionsServer(unittest.TestCase):
         """Test serve method with valid responses"""
         # Mock the retriever to return our mock data as dictionaries
         self.mock_retriever.retrieve.return_value = [self.mock_purchase_transactions_data]
-    
+        
         result = self.purchase_transactions_server.serve()
         
         self.assertIsInstance(result, pd.DataFrame)
@@ -207,7 +207,7 @@ class TestPurchaseTransactionsServer(unittest.TestCase):
     def test_serve_with_invalid_response_format(self):
         """Test serve method with invalid response format"""
         self.mock_retriever.retrieve.return_value = ["invalid json"]
-    
+        
         with self.assertRaises(TypeError):
             self.purchase_transactions_server.serve()
 
@@ -232,7 +232,7 @@ class TestPurchaseTransactionsServer(unittest.TestCase):
                 ]
             }
         }
-    
+        
         result = self.purchase_transactions_server._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)

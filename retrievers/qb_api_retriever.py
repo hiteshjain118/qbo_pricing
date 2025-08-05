@@ -4,6 +4,10 @@ from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from oauth_manager import QBOOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
 
