@@ -153,7 +153,8 @@ class QBOReportScheduler:
         if success:
             self.update_job_run(realm_id)
         return success
-      
+        # return True
+    
     def get_job_for_realm(self, realm_id: str) -> Optional[Dict[str, Any]]:
         """Get job configuration for a specific realm from database"""
         try:

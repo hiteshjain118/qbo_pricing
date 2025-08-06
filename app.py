@@ -199,6 +199,24 @@ def run_job_now():
     return redirect(url_for('index'))
 
 
+@app.route('/api/cron')
+def cron_endpoint():
+    """Cron job endpoint for running scheduled reports"""
+    try:
+        # Run the scheduled reports
+        report_manager.run_scheduled_jobs()
+        return jsonify({
+            "status": "success",
+            "message": "Scheduled reports completed successfully"
+        })
+    except Exception as e:
+        logger.error(f"Error in cron job: {e}")
+        return jsonify({
+            "status": "error",
+            "error": str(e)
+        }), 500
+
+
 def main():
     """Main entry point - Flask web server"""
     print("Starting QBO Report Scheduler...")
