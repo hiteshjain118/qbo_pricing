@@ -338,11 +338,22 @@
                     {% if existing_job %}
                         {% set emails = existing_job.email.split(',') %}
                         {% if emails|length == 1 %}
-                            {{ existing_job.email }} at <span id="displayTime">{{ existing_job.schedule_time }}</span>
+                            {{ existing_job.email }} at <span id="displayTime">Loading...</span> ({{ existing_job.user_timezone }})
                         {% else %}
-                            {{ emails|length }} recipients at <span id="displayTime">{{ existing_job.schedule_time }}</span>
+                            {{ emails|length }} recipients at <span id="displayTime">Loading...</span> ({{ existing_job.user_timezone }})
                             <br><small style="color: #666;">{{ existing_job.email }}</small>
                         {% endif %}
+                        <script>
+                            // Fix the display time to show the correct value
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const displayTime = document.getElementById('displayTime');
+                                const correctTime = "{{ existing_job.daily_schedule_time if existing_job else '' }}";
+                                if (displayTime && correctTime) {
+                                    displayTime.textContent = correctTime;
+                                    console.log('Display time set to:', correctTime);
+                                }
+                            });
+                        </script>
                         <button type="button" class="btn-link" onclick="editSchedule()">Edit</button>
                     {% else %}
                         Not scheduled
@@ -403,8 +414,39 @@
                 
                 <div class="form-group">
                     <label for="schedule_time">Report Time (Your Local Time)</label>
-                    <input type="time" id="schedule_time" name="schedule_time" value="{{ existing_job.schedule_time if existing_job else '09:00' }}" 
+                    <input type="time" id="schedule_time" name="schedule_time" value="09:00" 
                            {% if not connected_companies %}disabled{% endif %} required>
+                    <script>
+                        // Fix time input using timezone information from database
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const timeInput = document.getElementById('schedule_time');
+                            const userTimezone = "{{ existing_job.user_timezone if existing_job else '' }}";
+                            const dailyScheduleTime = "{{ existing_job.daily_schedule_time if existing_job else '' }}";
+                            
+                            console.log('=== TIME DEBUG ===');
+                            console.log('User timezone:', userTimezone);
+                            console.log('Daily schedule time:', dailyScheduleTime);
+                            console.log('Initial timeInput.value:', timeInput ? timeInput.value : 'null');
+                            
+                            if (timeInput && dailyScheduleTime && userTimezone) {
+                                // Force the correct time display - use the same value as the display
+                                timeInput.value = dailyScheduleTime;
+                                console.log('After setting value:', timeInput.value);
+                                
+                                // Also try setting it after a small delay to override any browser interpretation
+                                setTimeout(() => {
+                                    timeInput.value = dailyScheduleTime;
+                                    console.log('After timeout:', timeInput.value);
+                                }, 100);
+                                
+                                // And again after a longer delay to ensure it sticks
+                                setTimeout(() => {
+                                    timeInput.value = dailyScheduleTime;
+                                    console.log('After longer timeout:', timeInput.value);
+                                }, 500);
+                            }
+                        });
+                    </script>
                     <small style="color: #666; margin-top: 5px; display: block;">
                         Reports will be generated and sent daily at this time in your local timezone
                     </small>
@@ -530,12 +572,12 @@
                 timeInput.value = localTime;
             }
             
-            // Convert displayed time in status section
-            const displayTimeElement = document.getElementById('displayTime');
-            if (displayTimeElement && displayTimeElement.textContent) {
-                const localDisplayTime = convertTimeToLocal(displayTimeElement.textContent);
-                displayTimeElement.textContent = localDisplayTime;
-            }
+            // Don't convert displayed time - it should show the exact time from database
+            // const displayTimeElement = document.getElementById('displayTime');
+            // if (displayTimeElement && displayTimeElement.textContent) {
+            //     const localDisplayTime = convertTimeToLocal(displayTimeElement.textContent);
+            //     displayTimeElement.textContent = localDisplayTime;
+            // }
         });
         
         function disconnectQuickBooks() {

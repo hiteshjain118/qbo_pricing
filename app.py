@@ -5,14 +5,15 @@ QBO Report Scheduler - Flask Web Application
 Simple Flask web app for scheduling QuickBooks reports
 """
 
+from datetime import datetime, time
 import os
-import time
 import logging
 from qbo_request_auth_params import QBORequestAuthParams
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 from oauth_manager import QBOOAuthManager
-from report_scheduler import QBOReportScheduler
+from report_scheduler import CompanyReportConfig, QBOReportScheduler
 from logging_config import setup_logging
+from time_util import TimeUtil
 
 # Setup logging
 setup_logging()
@@ -37,11 +38,12 @@ def index():
         # Get existing job if any
         existing_job = None
         if connected_companies:
-            existing_job = report_manager.get_job_for_realm(connected_companies[0]['realm_id'])
+            job_config = report_manager.get_job_for_realm(connected_companies[0]['realm_id'])
+            existing_job = job_config.to_dict()
         
+        logger.info(f"existing_job: {existing_job}")
         # Get today's date in YYYY-MM-DD format for the date input default
-        from datetime import datetime
-        today_date = datetime.now().strftime('%Y-%m-%d')
+        today_date = TimeUtil.now().strftime('%Y-%m-%d')
         
         return render_template('index.html', 
                              connected_companies=connected_companies,
@@ -52,7 +54,7 @@ def index():
         return render_template('index.html', 
                              connected_companies=[],
                              existing_job=None,
-                             today_date=datetime.now().strftime('%Y-%m-%d'))
+                             today_date=today_date)
 
 @app.route('/connect', methods=['POST'])
 def connect_quickbooks():
@@ -112,29 +114,17 @@ def configure_job():
     
     # Convert user's local time to UTC for storage
     try:
-        import pytz
-        from datetime import datetime, time
-        
         # Parse the time input (HH:MM format)
         hour, minute = map(int, schedule_time.split(':'))
         user_time = time(hour, minute)
         
         # Create a datetime object for today in user's timezone
-        user_tz = pytz.timezone(user_timezone)
-        today = datetime.now(user_tz).date()
-        user_datetime = user_tz.localize(datetime.combine(today, user_time))
-        
-        # Convert to UTC
-        utc_datetime = user_datetime.astimezone(pytz.UTC)
-        
-        # Store the UTC time as HH:MM format
-        utc_schedule_time = utc_datetime.strftime('%H:%M')
-        
-        logger.info(f"Converting schedule time from {user_timezone}: {schedule_time} -> UTC: {utc_schedule_time}")
-        
+        today = TimeUtil.now().date()
+        user_datetime = TimeUtil.localize(datetime.combine(today, user_time))
+                
         # Store comma-separated email list
         email_string = ', '.join(email_list)
-        report_manager.store_job_config(realm_id, email_string, utc_schedule_time)
+        report_manager.store_job_config(realm_id, email_string, user_datetime)
         flash('Job scheduled successfully!', 'success')
         
     except Exception as e:
@@ -186,8 +176,7 @@ def run_job_now():
     
     try:
         # Generate and send report immediately
-        success = report_manager.generate_and_send_report_for_realm(realm_id, email, report_date)
-        
+        success = report_manager.generate_and_send_report_for_realm(realm_id, report_date)        
         if success:
             flash('✅ Report generated and sent successfully!', 'success')
         else:

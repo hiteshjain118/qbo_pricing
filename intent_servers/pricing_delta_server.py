@@ -34,7 +34,7 @@ class PricingDeltaServer(IIntentServer):
         auth_params: QBORequestAuthParams, 
         realm_id: str, 
         email: str,
-        report_dt: datetime = datetime.now()
+        report_dt: datetime = datetime.now(pytz.timezone('America/Los_Angeles'))
     ) -> 'PricingDeltaServer':
         # Use absolute paths that work in deployed environment
         current_dir = os.getcwd()
@@ -79,7 +79,7 @@ class PricingDeltaServer(IIntentServer):
         purchase_transactions_file_path: str,
         realm_id: str,
         email: str,
-        report_dt: datetime = datetime.now()
+        report_dt: datetime = datetime.now(pytz.timezone('America/Los_Angeles'))
     ) -> 'PricingDeltaServer':
         return PricingDeltaServer(
             purchase_transactions_server=PurchaseTransactionsServer(

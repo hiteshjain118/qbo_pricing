@@ -60,10 +60,17 @@ class QBOJob(Base):
     id = Column(Integer, primary_key=True)
     realm_id = Column(String(50), nullable=False)
     email = Column(String(1000), nullable=False)  # Comma-separated list of email addresses
-    schedule_time = Column(String(20), nullable=False)
-    next_run = Column(DateTime, nullable=True)
-    last_run = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    # user local time
+    # schedule_time = Column(DateTime, nullable=False)
+    daily_schedule_time = Column(String(100), nullable=True)
+    user_timezone = Column(String(100), nullable=True)
+    
+    # system time (UTC)
+    # next_run = Column(DateTime, nullable=True)
+    last_run_ts = Column(Integer, nullable=True)
+    # last_run = Column(DateTime, nullable=True)
+    created_at_ts = Column(Integer, nullable=True)
+    # created_at = Column(DateTime, default=datetime.utcnow)
     
     def __repr__(self):
         return f"<QBOJob(realm_id='{self.realm_id}', email='{self.email}')>"

@@ -18,12 +18,15 @@ def format_datetime(dt):
     """Format datetime for display in PST timezone"""
     if dt:
         # Convert to PST timezone
-        pst = pytz.timezone('US/Pacific')
+        pst = pytz.timezone('America/Los_Angeles')
         if dt.tzinfo is None:
-            # Assume UTC if no timezone info
-            dt = pytz.utc.localize(dt)
-        pst_time = dt.astimezone(pst)
-        return pst_time.strftime('%Y-%m-%d %H:%M:%S PST')
+            # For naive datetime, assume it's already in Pacific time
+            # (This is how next_run is stored in the database)
+            dt = pst.localize(dt)
+        else:
+            # For aware datetime, convert to Pacific time
+            dt = dt.astimezone(pst)
+        return dt.strftime('%Y-%m-%d %H:%M:%S PST')
     return 'None'
 
 def is_token_expired(expires_at):
@@ -68,8 +71,8 @@ def list_all_data():
                 print(f"    Token Type: {company[4]}")
                 print(f"    Expires In: {company[5]} seconds")
                 print(f"    Refresh Token Expires In: {company[6]} seconds")
-                print(f"    Created At: {format_datetime(company[7])}")
-                print(f"    Expires At: {format_datetime(company[8])}")
+                print(f"    Created At: {format_datetime(company[7])} raw: {company[7]}")
+                print(f"    Expires At: {format_datetime(company[8])} raw: {company[8]}")
                 
                 # Show token status
                 if company[8]:
@@ -93,10 +96,10 @@ def list_all_data():
                 print(f"    ID: {job[0]}")
                 print(f"    Realm ID: {job[1]}")
                 print(f"    Email: {job[2]}")
-                print(f"    Schedule Time: {job[3]}")
-                print(f"    Next Run: {format_datetime(job[4])}")
-                print(f"    Last Run: {format_datetime(job[5])}")
-                print(f"    Created At: {format_datetime(job[6])}")
+                print(f"    Daily Schedule Time: {job[3]}")
+                print(f"    User Timezone: {job[4]}")
+                print(f"    Last Run TS: {job[5]} PST: {datetime.fromtimestamp(job[5]).strftime('%Y-%m-%d %H:%M:%S') if job[5] else 'None'}")
+                print(f"    Created At TS: {job[6]} PST: {datetime.fromtimestamp(job[6]).strftime('%Y-%m-%d %H:%M:%S') if job[6] else 'None'}")
         
         # Production Companies
         print("\n🚀 PRODUCTION COMPANIES")
@@ -117,8 +120,8 @@ def list_all_data():
                 print(f"    Token Type: {company[4]}")
                 print(f"    Expires In: {company[5]} seconds")
                 print(f"    Refresh Token Expires In: {company[6]} seconds")
-                print(f"    Created At: {format_datetime(company[7])}")
-                print(f"    Expires At: {format_datetime(company[8])}")
+                print(f"    Created At: {format_datetime(company[7])} raw: {company[7]}")
+                print(f"    Expires At: {format_datetime(company[8])} raw: {company[8]}")
                 
                 # Show token status
                 if company[8]:
@@ -142,10 +145,10 @@ def list_all_data():
                 print(f"    ID: {job[0]}")
                 print(f"    Realm ID: {job[1]}")
                 print(f"    Email: {job[2]}")
-                print(f"    Schedule Time: {job[3]}")
-                print(f"    Next Run: {format_datetime(job[4])}")
-                print(f"    Last Run: {format_datetime(job[5])}")
-                print(f"    Created At: {format_datetime(job[6])}")
+                print(f"    Daily Schedule Time: {job[3]}")
+                print(f"    User Timezone: {job[4]}")
+                print(f"    Last Run TS: {job[5]} PST: {datetime.fromtimestamp(job[5]).strftime('%Y-%m-%d %H:%M:%S') if job[5] else 'None'}")
+                print(f"    Created At TS: {job[6]} PST: {datetime.fromtimestamp(job[6]).strftime('%Y-%m-%d %H:%M:%S') if job[6] else 'None'}")
         
     except Exception as e:
         print(f"❌ Error: {e}")
