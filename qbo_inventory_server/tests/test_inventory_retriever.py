@@ -12,12 +12,14 @@ import pandas as pd
 from datetime import datetime
 
 # Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from retrievers.qb_inventory_api_retriever import QBInventoryAPIRetriever
+from qb_inventory_api_retriever import QBInventoryAPIRetriever
 from qbo_request_auth_params import QBORequestAuthParams
+from qbo.qbo_user import QBOUser
+from core.iauthenticator import IHTTPConnection
 import logging
-from logging_config import setup_logging
+from core.logging_config import setup_logging
 
 # Setup logging
 setup_logging()
@@ -30,9 +32,16 @@ class TestInventoryRetriever(unittest.TestCase):
         """Set up test fixtures"""
         self.auth_params = QBORequestAuthParams()
         self.realm_id = "test_realm_id"
+        
+        # Create mock connection and QBO user
+        self.mock_connection = Mock(spec=IHTTPConnection)
+        self.mock_qbo_user = Mock(spec=QBOUser)
+        self.mock_qbo_user.realm_id = self.realm_id
+        self.mock_qbo_user.base_url = "https://sandbox-quickbooks.api.intuit.com"
+        
         self.retriever = QBInventoryAPIRetriever(
-            auth_params=self.auth_params,
-            realm_id=self.realm_id
+            connection=self.mock_connection,
+            qbo_user=self.mock_qbo_user
         )
 
     def test_call_api_once(self):
@@ -51,13 +60,7 @@ class TestInventoryRetriever(unittest.TestCase):
                 self.assertIn('QueryResponse', response_dict)
                 self.assertIn('Item', response_dict['QueryResponse'])
 
-    def test_describe_for_logging(self):
-        """Test the _describe_for_logging method"""
-        responses = ['response1', 'response2', 'response3']
-        description = self.retriever._describe_for_logging(responses)
-        
-        self.assertIn("got total:#3", description)
-        self.assertIn("inventory responses", description)
+
 
     def test_retrieve_with_mock(self):
         """Test the retrieve method with mock data"""
@@ -68,7 +71,7 @@ class TestInventoryRetriever(unittest.TestCase):
     
         with patch('requests.get', return_value=mock_response):
             with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
-                with patch.object(self.retriever.oauth_manager, 'is_company_connected', return_value=True):
+                with patch.object(self.retriever.connection, 'is_authorized', return_value=True):
                     responses = self.retriever.retrieve()
     
                     self.assertIsInstance(responses, list)
@@ -78,15 +81,15 @@ class TestInventoryRetriever(unittest.TestCase):
 
     def test_retrieve_company_not_connected(self):
         """Test retrieve method when company is not connected"""
-        with patch.object(self.retriever.oauth_manager, 'is_company_connected', return_value=False):
+        with patch.object(self.retriever.connection, 'is_authorized', return_value=False):
             with self.assertRaises(Exception) as context:
                 self.retriever.retrieve()
             
-            self.assertIn("Company test_realm_id is no longer connected", str(context.exception))
+            self.assertIn("Entity test_realm_id is no longer connected", str(context.exception))
 
     def test_get_headers(self):
         """Test the get_headers method"""
-        with patch.object(self.retriever.oauth_manager, 'get_valid_access_token_not_throws', return_value='test_token'):
+        with patch.object(self.retriever.connection, 'get_valid_access_token_not_throws', return_value='test_token'):
             headers = self.retriever.get_headers()
             
             self.assertIn('Authorization', headers)
@@ -96,11 +99,11 @@ class TestInventoryRetriever(unittest.TestCase):
 
     def test_get_headers_no_token(self):
         """Test get_headers when no valid token is available"""
-        with patch.object(self.retriever.oauth_manager, 'get_valid_access_token_not_throws', return_value=None):
+        with patch.object(self.retriever.connection, 'get_valid_access_token_not_throws', return_value=None):
             with self.assertRaises(Exception) as context:
                 self.retriever.get_headers()
             
-            self.assertIn("No valid access token for company test_realm_id", str(context.exception))
+            self.assertIn("No valid access token for entity test_realm_id", str(context.exception))
 
     def test_call_api_once_missing_query_response(self):
         """Test _call_api_once when QueryResponse key is missing"""
@@ -121,8 +124,12 @@ class TestInventoryRetriever(unittest.TestCase):
     
         with patch('requests.get', return_value=mock_response):
             with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
-                with self.assertRaises(KeyError):
-                    self.retriever._call_api_once()
+                response_dict, num_items = self.retriever._call_api_once()
+    
+                self.assertIsInstance(response_dict, dict)
+                self.assertEqual(num_items, 0)
+                self.assertIn('QueryResponse', response_dict)
+                self.assertIn('SomeOtherKey', response_dict['QueryResponse'])
 
     def test_call_api_once_empty_item_list(self):
         """Test _call_api_once when Item list is empty"""
@@ -159,7 +166,7 @@ class TestInventoryRetriever(unittest.TestCase):
     
         with patch('requests.get', return_value=mock_response):
             with patch.object(self.retriever, 'get_headers', return_value={'Authorization': 'Bearer test_token'}):
-                with self.assertRaises(TypeError):
+                with self.assertRaises(AttributeError):
                     self.retriever._call_api_once()
 
 

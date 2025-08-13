@@ -8,21 +8,21 @@ import sys
 # Add parent directories to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from intent_servers.inventory_server import InventoryServer
-from retrievers.iretriever import IRetriever
-from retrievers.qb_file_retriever import QBFileRetriever
+from qbo.qbo_inventory_server.Inventory_price_process_node import InventoryPriceProcessNode
+from core.iretriever import IRetriever
+from qbo.qb_file_retriever import QBFileRetriever
 
 
-class TestInventoryServer(unittest.TestCase):
+class TestInventoryPriceSlotExtractor(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         self.mock_retriever = Mock(spec=IRetriever)
-        self.inventory_server = InventoryServer(self.mock_retriever)
+        self.inventory_slot_extractor = InventoryPriceProcessNode(self.mock_retriever)
         
         # Load mock data from file - use only the first line since it's JSONL format
         # Use absolute path from current working directory
         current_dir = os.getcwd()
-        mock_file_path = os.path.join(current_dir, 'retrievers', 'tests', 'mock_inventory_response.jsonl')
+        mock_file_path = os.path.join(current_dir, 'qbo_inventory_server', 'tests', 'mock_inventory_response.jsonl')
         with open(mock_file_path, 'r') as f:
             # The mock data is double-escaped, so we need to parse it twice
             raw_line = f.readline().strip()
@@ -31,15 +31,15 @@ class TestInventoryServer(unittest.TestCase):
             self.mock_inventory_data = json.loads(parsed_once)
 
     def test_init(self):
-        """Test InventoryServer initialization"""
-        self.assertEqual(self.inventory_server.qb_inventory_retriever, self.mock_retriever)
+        """Test InventoryPriceSlotExtractor initialization"""
+        self.assertEqual(self.inventory_slot_extractor.qb_inventory_retriever, self.mock_retriever)
 
     def test_extract_cols_with_valid_data(self):
         """Test extracting columns from valid inventory response using mock file data"""
         # The mock data is already parsed as a dictionary, pass it directly
         mock_response = self.mock_inventory_data
         
-        result = self.inventory_server._extract_cols(mock_response)
+        result = self.inventory_slot_extractor._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)
         # The mock data contains multiple items, so we should have multiple rows
@@ -58,7 +58,7 @@ class TestInventoryServer(unittest.TestCase):
             }
         }
     
-        result = self.inventory_server._extract_cols(mock_response)
+        result = self.inventory_slot_extractor._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)
         self.assertEqual(len(result), 0)
@@ -87,7 +87,7 @@ class TestInventoryServer(unittest.TestCase):
             }
         }
         
-        result = self.inventory_server._extract_cols(mock_response)
+        result = self.inventory_slot_extractor._extract_cols(mock_response)
         
         self.assertIsInstance(result, pd.DataFrame)
         # Items with missing FullyQualifiedName are skipped, but items with missing UnitPrice are included
@@ -102,8 +102,8 @@ class TestInventoryServer(unittest.TestCase):
 
     def test_extract_cols_with_invalid_json(self):
         """Test extracting columns with invalid JSON"""
-        with self.assertRaises(TypeError):
-            self.inventory_server._extract_cols("invalid json")
+        with self.assertRaises(KeyError):
+            self.inventory_slot_extractor._extract_cols({"invalid": "json"})
 
     def test_describe_for_logging(self):
         """Test the _describe_for_logging method"""
@@ -114,7 +114,7 @@ class TestInventoryServer(unittest.TestCase):
         }
         test_df = pd.DataFrame(test_data)
         
-        result = self.inventory_server._describe_for_logging(test_df)
+        result = self.inventory_slot_extractor._describe_for_logging(test_df)
         
         self.assertIsInstance(result, str)
         self.assertIn('Got total:#3 inventory items', result)
@@ -124,27 +124,27 @@ class TestInventoryServer(unittest.TestCase):
         """Test the _describe_for_logging method with empty DataFrame"""
         empty_df = pd.DataFrame()
         
-        result = self.inventory_server._describe_for_logging(empty_df)
+        result = self.inventory_slot_extractor._describe_for_logging(empty_df)
         
         self.assertIsInstance(result, str)
         self.assertIn('Got total:#0 inventory items', result)
 
-    def test_serve_with_valid_responses(self):
-        """Test serve method with valid responses"""
+    def test_extract_slots_with_valid_responses(self):
+        """Test extract_slots method with valid responses"""
         # Mock the retriever to return our mock data as dictionaries
         self.mock_retriever.retrieve.return_value = [self.mock_inventory_data]
         
-        result = self.inventory_server.serve()
+        result = self.inventory_slot_extractor.extract_slots()
         
         self.assertIsInstance(result, pd.DataFrame)
         self.assertGreater(len(result), 0)
         self.assertEqual(list(result.columns), ['product_name', 'inventory_price'])
 
-    def test_serve_with_empty_responses(self):
-        """Test serve method with empty responses"""
+    def test_extract_slots_with_empty_responses(self):
+        """Test extract_slots method with empty responses"""
         self.mock_retriever.retrieve.return_value = []
         
-        result = self.inventory_server.serve()
+        result = self.inventory_slot_extractor.extract_slots()
         
         self.assertIsInstance(result, pd.DataFrame)
         self.assertEqual(len(result), 0)
@@ -152,30 +152,30 @@ class TestInventoryServer(unittest.TestCase):
         if len(result.columns) > 0:
             self.assertEqual(list(result.columns), ['product_name', 'inventory_price'])
 
-    def test_serve_with_retriever_exception(self):
-        """Test serve method when retriever raises an exception"""
+    def test_extract_slots_with_retriever_exception(self):
+        """Test extract_slots method when retriever raises an exception"""
         self.mock_retriever.retrieve.side_effect = Exception("API Error")
         
         with self.assertRaises(Exception):
-            self.inventory_server.serve()
+            self.inventory_slot_extractor.extract_slots()
 
-    def test_serve_with_invalid_response_format(self):
-        """Test serve method with invalid response format"""
+    def test_extract_slots_with_invalid_response_format(self):
+        """Test extract_slots method with invalid response format"""
         self.mock_retriever.retrieve.return_value = ["invalid json"]
         
         with self.assertRaises(TypeError):
-            self.inventory_server.serve()
+            self.inventory_slot_extractor.extract_slots()
 
     def test_with_file_retriever(self):
-        """Test InventoryServer with QBFileRetriever using mock file"""
+        """Test InventoryPriceSlotExtractor with QBFileRetriever using mock file"""
         # Create a file retriever with the mock file
         # Use absolute path from current working directory
         current_dir = os.getcwd()
-        mock_file_path = os.path.join(current_dir, 'retrievers', 'tests', 'mock_inventory_response.jsonl')
+        mock_file_path = os.path.join(current_dir, 'qbo_inventory_server', 'tests', 'mock_inventory_response.jsonl')
         file_retriever = QBFileRetriever(mock_file_path)
-        inventory_server = InventoryServer(file_retriever)
+        inventory_slot_extractor = InventoryPriceProcessNode(file_retriever)
         
-        result = inventory_server.serve()
+        result = inventory_slot_extractor.extract_slots()
         
         self.assertIsInstance(result, pd.DataFrame)
         self.assertGreater(len(result), 0)

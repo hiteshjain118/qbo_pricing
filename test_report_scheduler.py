@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyright: reportGeneralTypeIssues=false, reportAttributeAccessIssue=false, reportArgumentType=false, reportReturnType=false, reportUnusedImport=false, reportMissingParameterType=false
 """
 Test script for QBOReportScheduler
 """

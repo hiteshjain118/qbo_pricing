@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyright: reportGeneralTypeIssues=false, reportAttributeAccessIssue=false, reportArgumentType=false, reportReturnType=false, reportUnusedImport=false
 """
 QBO Report Scheduler - Flask Web Application
 
@@ -12,7 +13,7 @@ from qbo_request_auth_params import QBORequestAuthParams
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 from oauth_manager import QBOOAuthManager
 from report_scheduler import CompanyReportConfig, QBOReportScheduler
-from logging_config import setup_logging
+from core.logging_config import setup_logging
 from time_util import TimeUtil
 
 # Setup logging

@@ -1,9 +1,9 @@
-from retrievers.iretriever import IRetriever
-from intent_servers.i_intent_server import IIntentServer
+from core.iretriever import IRetriever
+from core.iprocess_node import IProcessNode
 import pandas as pd
 import json
 import logging
-from logging_config import setup_logging
+from core.logging_config import setup_logging
 from typing import Any, Dict
 
 # Setup logging
@@ -11,11 +11,11 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-class InventoryServer(IIntentServer):
+class InventoryPriceProcessNode(IProcessNode):
     def __init__(self, qb_inventory_retriever: IRetriever):
         self.qb_inventory_retriever = qb_inventory_retriever
 
-    def serve(self) -> pd.DataFrame:
+    def process(self) -> pd.DataFrame:
         responses = self.qb_inventory_retriever.retrieve()
         inventory_data = pd.DataFrame() #empty dataframe
         for response in responses:
@@ -37,11 +37,14 @@ class InventoryServer(IIntentServer):
         
         return pd.DataFrame(inventory_data)
     
-    def _describe_for_logging(self, df: pd.DataFrame) -> str:
-        if df.empty:
+    def empty_value_reason(self) -> str:
+        return "No inventory items found"
+    
+    def _describe_for_logging(self, output: pd.DataFrame) -> str:
+        if output.empty:
             return "Got total:#0 inventory items across #0 unique products"
         
         return (
-            f"Got total:#{len(df)} inventory items"
-            f" across #{len(df['product_name'].unique())} unique products"
+            f"Got total:#{len(output)} inventory items"
+            f" across #{len(output['product_name'].unique())} unique products"
         )

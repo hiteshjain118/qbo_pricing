@@ -1,6 +1,32 @@
-# QBO Report Scheduler
+# QBO Application
 
-A simple Flask web application for scheduling automated QuickBooks Online Balance Sheet reports.
+This application uses the Builder library for conversational AI functionality.
+
+## Dependencies
+
+- **Builder Library**: A local dependency for intent classification, slot extraction, and model providers
+  - Located at `../builder`
+  - Provides core AI functionality for the QBO application
+
+## Installation
+
+1. Install the builder library:
+   ```bash
+   cd ../builder
+   pip install -e .
+   ```
+
+2. Install the QBO application:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Usage
+
+The QBO application leverages the Builder library for:
+- Intent classification of user queries
+- Slot extraction from natural language
+- Model provider abstractions for different LLM services
 
 ## Architecture
 

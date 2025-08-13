@@ -10,18 +10,23 @@ import base64
 
 import sys
 import os
+
+from qbo.qbo_authenticator import QBOHTTPConnection
+from qbo.qbo_user import QBOUser
+from qbo.qbo_inventory_server.Inventory_price_process_node import InventoryPriceProcessNode
+from qbo.qbo_pricing_delta.pricing_delta_process_node import PricingDeltaProcessNode
+from qbo.qbo_purchase_transactions.purchase_transactions_process_node import PurchaseTransactionsProcessNode
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from intent_servers.i_intent_server import IIntentServer
-from intent_servers.inventory_server import InventoryServer
-from intent_servers.purchase_transactions_server import PurchaseTransactionsServer
-from retrievers.qb_api_retriever import QBAPIRetriever
-from retrievers.qb_inventory_api_retriever import QBInventoryAPIRetriever
-from retrievers.qb_purchase_transactions_api_retriever import QBPurchaseTransactionsAPIRetriever
-from retrievers.qb_file_retriever import QBFileRetriever
-from qbo_request_auth_params import QBORequestAuthParams
+from core.iintent_server import IIntentServer
+from qbo.qbo_inventory_server.Inventory_price_process_node import InventoryPriceProcessNode
+from qbo.qbo_purchase_transactions.purchase_transactions_process_node import PurchaseTransactionsProcessNode
+from qbo_inventory_server.qb_inventory_api_retriever import QBInventoryAPIRetriever
+from qbo_purchase_transactions.qb_purchase_transactions_api_retriever import QBPurchaseTransactionsAPIRetriever
+from core.jsonl_file_retriever import JsonlFileRetriever
+from qbo_request_auth_params import QBORequestAuthParams, is_prod_environment
 from email_sender import CompanyEmailSender
-from logging_config import setup_logging
+from core.logging_config import setup_logging
 import logging
 
 # Setup logging
@@ -43,25 +48,30 @@ class PricingDeltaServer(IIntentServer):
 
         inventory_save_file_path = None
         purchase_transactions_save_file_path = None
-
-        inventory_server = InventoryServer(
+        
+        connection = PricingDeltaServer.http_connection(auth_params, realm_id)
+        qbo_user = PricingDeltaServer.qbo_user(realm_id)
+        
+        inventory_process_node = InventoryPriceProcessNode(
             qb_inventory_retriever=QBInventoryAPIRetriever(
-                auth_params=auth_params,
-                realm_id=realm_id,
+                connection=connection,
+                qbo_user=qbo_user,
                 save_file_path=inventory_save_file_path
             )
         )
-        purchase_transactions_server = PurchaseTransactionsServer(
+        purchase_transactions_process_node = PurchaseTransactionsProcessNode(
             qb_purchase_transactions_retriever=QBPurchaseTransactionsAPIRetriever(
-                auth_params=auth_params,
-                realm_id=realm_id,
+                connection=connection,
+                qbo_user=qbo_user,
                 report_dt=report_dt,
                 save_file_path=purchase_transactions_save_file_path
             ))
         return PricingDeltaServer(
-            purchase_transactions_server=purchase_transactions_server,
-            inventory_server=inventory_server,
-            realm_id=realm_id,
+            pricing_delta_process_node=PricingDeltaProcessNode(
+                purchase_transactions_process_node=purchase_transactions_process_node,
+                inventory_process_node=inventory_process_node
+            ),
+            qbo_user=qbo_user,
             email_sender = PricingDeltaServer.get_email_sender(realm_id, email, report_dt)
         )
 
@@ -75,63 +85,74 @@ class PricingDeltaServer(IIntentServer):
 
     @staticmethod
     def init_with_file_retrievers(
-        inventory_file_path: str,
-        purchase_transactions_file_path: str,
+        inventory_save_file_path: str,
+        purchase_transactions_save_file_path: str,
         realm_id: str,
         email: str,
         report_dt: datetime = datetime.now(pytz.timezone('America/Los_Angeles'))
     ) -> 'PricingDeltaServer':
         return PricingDeltaServer(
-            purchase_transactions_server=PurchaseTransactionsServer(
-                qb_purchase_transactions_retriever=QBFileRetriever(
-                    file_path=purchase_transactions_file_path
+                pricing_delta_process_node=PricingDeltaProcessNode(
+                    purchase_transactions_process_node=PurchaseTransactionsProcessNode(
+                    qb_purchase_transactions_retriever=JsonlFileRetriever(
+                        file_path=purchase_transactions_save_file_path
+                    )
+                ),
+                inventory_process_node=InventoryPriceProcessNode(
+                    qb_inventory_retriever=JsonlFileRetriever(
+                        file_path=inventory_save_file_path
+                    )
                 )
             ),
-            inventory_server=InventoryServer(
-                qb_inventory_retriever=QBFileRetriever(
-                    file_path=inventory_file_path
-                )
-            ),
-            realm_id=realm_id,
+            qbo_user=PricingDeltaServer.qbo_user(realm_id),
             email_sender = PricingDeltaServer.get_email_sender(realm_id, email, report_dt)
+        )
+
+    @staticmethod
+    def http_connection(
+        auth_params: QBORequestAuthParams, 
+        realm_id: str,
+    ):
+        return QBOHTTPConnection(auth_params, realm_id)
+
+    @staticmethod
+    def qbo_user(
+        realm_id: str,
+    ) -> QBOUser:
+        return QBOUser(
+            realm_id=realm_id, 
+            user_timezone="America/Los_Angeles"
         )
 
     def __init__(
         self, 
-        purchase_transactions_server: PurchaseTransactionsServer,
-        inventory_server: InventoryServer,
-        realm_id: str,
+        # purchase_transactions_server: PurchaseTransactionsServer,
+        pricing_delta_process_node: PricingDeltaProcessNode,
+        qbo_user: QBOUser,
         email_sender: CompanyEmailSender,
     ):
-        self.purchase_transactions_server = purchase_transactions_server
-        self.inventory_server = inventory_server
-        self.realm_id = realm_id
+        # self.purchase_transactions_server = purchase_transactions_server
+        self.pricing_delta_process_node = pricing_delta_process_node
+        self.qbo_user = qbo_user
         self.email_sender = email_sender
         
     def serve(self) -> bool:
         """Generate balance sheet report and send via email"""
         
-        logger.info(f"Generating report for company {self.realm_id}")
+        logger.info(f"Generating report for company {self.qbo_user.realm_id}")
         
         try:
             # Get pricing delta data
-            purchase_transactions_df = self.purchase_transactions_server.serve()
-            inventory_pricing_df = self.inventory_server.serve()
-            pricing_delta_df = pd.DataFrame()
+            pricing_delta_df = self.pricing_delta_process_node.process()
 
             # Handle empty DataFrames
-            if purchase_transactions_df.empty:
-                html = self.get_empty_table_html("No purchase transactions found")
-                excel_data = ""
-            elif inventory_pricing_df.empty:
-                html = self.get_empty_table_html("No inventory pricing found")
+            if pricing_delta_df.empty:
+                empty_reason = self.pricing_delta_process_node.empty_value_reason()
+                html = self.get_empty_table_html(empty_reason)
                 excel_data = ""
             else:
-                pricing_delta_df = self.get_pricing_delta(purchase_transactions_df, inventory_pricing_df)
                 html, excel_data = self.format_pricing_delta_to_html(pricing_delta_df)
             
-            logger.info(self._describe_for_logging(pricing_delta_df, purchase_transactions_df, inventory_pricing_df))
-        
             # Send email
             self.email_sender.send_email(html, excel_data)
         
@@ -141,30 +162,6 @@ class PricingDeltaServer(IIntentServer):
             raise e
         
         return True
-
-    def get_pricing_delta(
-        self, 
-        purchase_transactions_df: pd.DataFrame, 
-        inventory_pricing_df: pd.DataFrame
-    ) -> pd.DataFrame:
-        
-        # Merge the two dataframes on the product_name column
-        merged_df = pd.merge(
-            purchase_transactions_df, 
-            inventory_pricing_df, 
-            on='product_name', 
-            how='left',
-            indicator='matched'
-        )
-        
-        # Calculate the pricing delta
-        merged_df['pricing_delta'] = (merged_df['inventory_price'] - merged_df['purchase_price'])
-
-        merged_df['pricing_perc_delta'] = round(
-            merged_df['pricing_delta'] / merged_df['purchase_price'] * 100, 2
-        )
-
-        return merged_df
     
     def format_pricing_delta_to_html(self, pricing_delta: pd.DataFrame) -> tuple[str, str]:
         # Handle empty DataFrame
@@ -216,22 +213,3 @@ class PricingDeltaServer(IIntentServer):
 
     def get_empty_table_html(self, message: str) -> str:
         return f"<p>{message}</p>"
-    
-    def _describe_for_logging(
-        self, 
-        pricing_delta: pd.DataFrame, 
-        purchase_transactions_df: pd.DataFrame, 
-        inventory_pricing_df: pd.DataFrame
-    ) -> str:
-        if pricing_delta.empty:
-            return (
-                f"Pricing delta total rows: 0 w/ nan inventory price: 0 products with nan inventory price: []"
-                f"purchase transactions total rows: {len(purchase_transactions_df)}"
-                f"inventory pricing total rows: {len(inventory_pricing_df)}"
-            )
-        
-        return (
-            f"Pricing delta total rows: {len(pricing_delta)} "
-            f"w/ nan inventory price: {pricing_delta['inventory_price'].isna().sum()}"
-            f" products with nan inventory price: {pricing_delta[pricing_delta['matched'] == 'left_only']['product_name'].unique()}"
-        )

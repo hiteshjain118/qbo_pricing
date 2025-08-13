@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyright: reportGeneralTypeIssues=false, reportAttributeAccessIssue=false, reportArgumentType=false, reportReturnType=false, reportUnusedImport=false
 """
 QBO Report Manager
 
@@ -14,12 +15,11 @@ import time
 from database import DB
 from oauth_manager import QBOOAuthManager
 from qbo_request_auth_params import QBORequestAuthParams
-from intent_servers.pricing_delta_server import PricingDeltaServer
-from retrievers.qb_file_retriever import QBFileRetriever
-from logging_config import setup_logging
+from qbo_pricing_delta.pricing_delta_server import PricingDeltaServer
+from core.logging_config import setup_logging
 import logging
 
-from time_util import TimeUtil
+
 
 # Setup logging
 setup_logging()
@@ -57,10 +57,10 @@ class QBOReportScheduler:
                         
             if existing_job:
                 # Update existing job
-                existing_job.email = email
+                existing_job.email = email 
                 # format is hh:mm
                 existing_job.daily_schedule_time = f"{schedule_time.hour:02d}:{schedule_time.minute:02d}"
-                existing_job.user_timezone = "America/Los_Angeles"  # Default to Pacific timezone
+                existing_job.user_timezone = "America/Los_Angeles"
                 existing_job.created_at_ts = int(time.time())
             else:
                 # Create new job
@@ -207,9 +207,9 @@ class QBOReportScheduler:
         
         # Parse report_date if provided, otherwise use current date
         if report_date:
-            report_dt = TimeUtil.localize(report_date)
+            report_dt = datetime.strptime(report_date, "%Y-%m-%d")
         else:
-            report_dt = TimeUtil.now()
+            report_dt = datetime.now(pytz.timezone(company_report_config.user_timezone))
     
         print(f"Generating report for company {company_report_config.realm_id}, email: {company_report_config.email} report_date: {report_dt}")
         

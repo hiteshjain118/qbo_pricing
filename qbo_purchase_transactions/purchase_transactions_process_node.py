@@ -1,9 +1,9 @@
 import pandas as pd
-from retrievers.iretriever import IRetriever
-from intent_servers.i_intent_server import IIntentServer
+from core.iretriever import IRetriever
+from core.iprocess_node import IProcessNode
 import json
 import logging
-from logging_config import setup_logging
+from core.logging_config import setup_logging
 from typing import Any, Dict
 
 # Setup logging
@@ -11,11 +11,11 @@ setup_logging()
 logger = logging.getLogger(__name__)
 
 
-class PurchaseTransactionsServer(IIntentServer):
+class PurchaseTransactionsProcessNode(IProcessNode):
     def __init__(self, qb_purchase_transactions_retriever: IRetriever):
         self.qb_purchase_transactions_retriever = qb_purchase_transactions_retriever
 
-    def serve(self) -> pd.DataFrame:
+    def process(self) -> pd.DataFrame:
         responses = self.qb_purchase_transactions_retriever.retrieve()
         purchase_transactions = pd.DataFrame()
         for response in responses:
@@ -71,11 +71,14 @@ class PurchaseTransactionsServer(IIntentServer):
         logger.info(f"Extracted {len(extracted_data)} line items")
         return pd.DataFrame(extracted_data)
 
-    def _describe_for_logging(self, df: pd.DataFrame) -> str:
-        if df.empty:
+    def empty_value_reason(self) -> str:
+        return "No purchase transactions found"
+    
+    def _describe_for_logging(self, output: pd.DataFrame) -> str:
+        if output.empty:
             return "Got total:#0 purchase transactions across #0 unique products"
         
         return (
-            f"Got total:#{len(df)} purchase transactions"
-            f" across #{len(df['product_name'].unique())} unique products"
+            f"Got total:#{len(output)} purchase transactions"
+            f" across #{len(output['product_name'].unique())} unique products"
         )
